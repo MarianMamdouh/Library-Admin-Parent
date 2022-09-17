@@ -1,7 +1,10 @@
 package com.example.libraryadminparent.core.domain.course.entity;
 
 import com.example.libraryadminparent.core.domain.professor.Professor;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -9,6 +12,9 @@ import java.math.BigDecimal;
 @Entity
 @Table
 @Builder
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Course {
 
     @Id

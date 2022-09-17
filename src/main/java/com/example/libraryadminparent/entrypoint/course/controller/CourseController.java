@@ -1,14 +1,14 @@
 package com.example.libraryadminparent.entrypoint.course.controller;
 
 import com.example.libraryadminparent.entrypoint.course.controller.request.CourseCreationRequestDTO;
+import com.example.libraryadminparent.entrypoint.course.controller.response.CourseListResponseDTO;
 import com.example.libraryadminparent.entrypoint.course.facade.CourseFacade;
+import com.example.libraryadminparent.entrypoint.professor.controller.response.ProfessorListResponseDTO;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -28,5 +28,12 @@ public class CourseController {
         courseFacade.createCourse(courseCreationRequestDTO);
 
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public Page<CourseListResponseDTO> getAllCourses() throws Exception {
+
+        return courseFacade.getAllCourses();
     }
 }

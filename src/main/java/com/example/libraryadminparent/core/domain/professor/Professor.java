@@ -7,6 +7,9 @@ import javax.persistence.*;
 @Entity
 @Table
 @Builder
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Professor {
 
     @Id

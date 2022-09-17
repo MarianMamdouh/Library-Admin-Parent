@@ -5,6 +5,8 @@ import com.example.libraryadminparent.core.domain.professor.repository.Professor
 import com.example.libraryadminparent.infrastructure.database.professor.ProfessorJpaRepository;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -22,5 +24,11 @@ public class ProfessorRepositoryImpl implements ProfessorRepository {
     @Override
     public Professor findByName(String name) {
         return professorJpaRepository.findByName(name).get();
+    }
+
+    @Override
+    public Page<Professor> findAll() {
+
+        return professorJpaRepository.findAll(Pageable.unpaged());
     }
 }
