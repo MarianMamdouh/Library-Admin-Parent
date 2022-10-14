@@ -1,15 +1,14 @@
-import {CustomerService} from '../services/customer.service';
 import {Component, OnInit} from '@angular/core';
 import {CourseService} from "../services/course.service";
 import {CoursePaperService} from "../services/course-paper.service";
 import {ConfirmationService, Message, MessageService} from "primeng/api";
-import {Product} from "../models/product";
-import {ProductService} from "../services/product.service";
+import {StudentService} from "../services/student.service";
 import {Course} from "../models/course";
 import {CoursePaper} from "../models/coursePaper";
 import {AcademicYearService} from "../services/academic-year.service";
 import {FacultyService} from "../services/faculty.service";
 import {CourseSlot} from "../models/courseSlot";
+import {PaymentInfo} from "../models/paymentInfo";
 
 @Component({
   selector: 'library-admin-dashboard',
@@ -55,6 +54,10 @@ export class LibraryAdminDashboardComponent implements OnInit {
 
   facultyNames: string[] = [];
 
+  coursesPaymentInfos: PaymentInfo[] = [];
+
+  coursePapersPaymentInfos: PaymentInfo[] = [];
+
   courseDialog: boolean;
 
   coursePaperDialog: boolean;
@@ -71,10 +74,6 @@ export class LibraryAdminDashboardComponent implements OnInit {
 
   addToCourse: boolean;
 
-  products: Product[];
-
-  product: Product;
-
   submitted: boolean = false;
 
   academicYearValue: Date;
@@ -86,13 +85,11 @@ export class LibraryAdminDashboardComponent implements OnInit {
   isFacultyNameDialogueSubmitted: boolean;
   isCourseSlotDialogueSubmitted: boolean;
 
-
   statuses: any[];
 
-  constructor(private customerService: CustomerService,
-              private courseService: CourseService,
+  constructor(private courseService: CourseService,
               private messageService: MessageService,
-              private productService: ProductService,
+              private studentService: StudentService,
               private confirmationService: ConfirmationService,
               private coursePaperService: CoursePaperService,
               private academicYearService: AcademicYearService,
@@ -105,7 +102,8 @@ export class LibraryAdminDashboardComponent implements OnInit {
     this.getAllCoursePapers();
     this.getAllAcademicYears();
     this.getAllFacultyNames();
-
+    this.getAllStudentCoursesPaymentInfo();
+    this.getAllStudentCoursePapersPaymentInfo();
   }
 
 
@@ -154,6 +152,27 @@ export class LibraryAdminDashboardComponent implements OnInit {
       });
   }
 
+  searchByPaymentInfoNumber(paymentInfoNumber) {
+
+    if (!paymentInfoNumber) {
+
+      this.getAllStudentCoursesPaymentInfo();
+      this.getAllStudentCoursePapersPaymentInfo();
+      return;
+    }
+
+    this.studentService.searchByPaymentNumber(paymentInfoNumber)
+      .then(response => {
+
+        this.coursesPaymentInfos = response.content;
+        // this.totalRecords = response.totalEleme
+      })
+      .catch(() => {
+
+        this.showError("Retrieving Payment Infos has failed!");
+      });
+  }
+
 
   getAllAcademicYears() {
 
@@ -182,6 +201,36 @@ export class LibraryAdminDashboardComponent implements OnInit {
         this.showError("Retrieving faculty names has failed!");
       });
   }
+
+  getAllStudentCoursesPaymentInfo() {
+
+    this.studentService.getAllCoursesPaymentInfo()
+      .then(response => {
+
+        this.coursesPaymentInfos = response.content;
+        this.totalRecords = response.totalElements;
+      })
+      .catch(() => {
+
+        this.showError("Retrieving payment infos has failed!");
+      });
+  }
+
+  getAllStudentCoursePapersPaymentInfo() {
+
+    this.studentService.getAllCoursePapersPaymentInfo()
+      .then(response => {
+
+        this.coursePapersPaymentInfos = response.content;
+        this.totalRecords = response.totalElements;
+      })
+      .catch(() => {
+
+        this.showError("Retrieving payment infos has failed!");
+      });
+  }
+
+
 
   openNew() {
 

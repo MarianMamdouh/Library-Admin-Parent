@@ -604,6 +604,98 @@
 
     <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
   </p-tabPanel>
+  <p-tabPanel header="Course Payment Info">
+
+    <p-toast></p-toast>
+
+    <div class="card">
+      <p-toolbar styleClass="p-mb-4">
+
+        <ng-template pTemplate="left">
+          <span class="p-input-icon-left">
+                    <i class="pi pi-search"></i>
+                    <input pInputText type="text"
+                           (keyup.enter)="searchByPaymentInfoNumber($event.target.value)" placeholder="Search by payment number..."/>
+                </span>
+        </ng-template>
+      </p-toolbar>
+
+      <p-table [value]="coursesPaymentInfos" [rows]="10"
+               [rowHover]="true">
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="paymentNumber">Payment Number
+              <p-sortIcon field="paymentNumber"></p-sortIcon>
+            </th>
+            <th pSortableColumn="studentName">Student Name
+              <p-sortIcon field="studentName"></p-sortIcon>
+            </th>
+            <th pSortableColumn="courseName">Course Name
+              <p-sortIcon field="courseName"></p-sortIcon>
+            </th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-paymentInfo>
+          <tr>
+            <td>{{paymentInfo.paymentNumber}}</td>
+            <td>{{paymentInfo.studentName}}</td>
+            <td>{{paymentInfo.courseName}}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="summary">
+          <div class="p-d-flex p-ai-center p-jc-between">
+            In total there are {{coursesPaymentInfos ? coursesPaymentInfos.length : 0 }} payment infos.
+          </div>
+        </ng-template>
+      </p-table>
+    </div>
+  </p-tabPanel>
+  <p-tabPanel header="Course Papers Payment Info">
+
+    <p-toast></p-toast>
+
+    <div class="card">
+      <p-toolbar styleClass="p-mb-4">
+
+        <ng-template pTemplate="left">
+          <span class="p-input-icon-left">
+                    <i class="pi pi-search"></i>
+                    <input pInputText type="text"
+                           (keyup.enter)="searchByPaymentInfoNumber($event.target.value)" placeholder="Search by payment number..."/>
+                </span>
+        </ng-template>
+      </p-toolbar>
+
+      <p-table [value]="coursePapersPaymentInfos" [rows]="10"
+               [rowHover]="true">
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="paymentNumber">Payment Number
+              <p-sortIcon field="paymentNumber"></p-sortIcon>
+            </th>
+            <th pSortableColumn="studentName">Student Name
+              <p-sortIcon field="studentName"></p-sortIcon>
+            </th>
+            <th pSortableColumn="coursePaperName">Course Paper Name
+              <p-sortIcon field="coursePaperName"></p-sortIcon>
+            </th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-coursePapersPaymentInfo>
+          <tr>
+            <td>{{coursePapersPaymentInfo.paymentNumber}}</td>
+            <td>{{coursePapersPaymentInfo.studentName}}</td>
+            <td>{{coursePapersPaymentInfo.coursePaperName}}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="summary">
+          <div class="p-d-flex p-ai-center p-jc-between">
+            In total there are {{coursePapersPaymentInfos ? coursePapersPaymentInfos.length : 0 }} payment infos.
+          </div>
+        </ng-template>
+      </p-table>
+    </div>
+  </p-tabPanel>
 </p-tabView>
 
 

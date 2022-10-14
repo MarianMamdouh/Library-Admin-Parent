@@ -10,7 +10,6 @@ import { AppComponent } from './app.component';
 import { LibraryAdminDashboardComponent } from './library-admin-dashboard/library-admin-dashboard.component';
 
 //Services
-import { CustomerService } from './services/customer.service';
 import { CourseService } from "./services/course.service";
 
 //Primeng UI Components
@@ -26,7 +25,7 @@ import {ToolbarModule} from "primeng/toolbar";
 import {FileUploadModule} from "primeng/fileupload";
 import {DialogModule} from "primeng/dialog";
 import {RadioButtonModule} from "primeng/radiobutton";
-import {ProductService} from "./services/product.service";
+import {StudentService} from "./services/student.service";
 import {RatingModule} from "primeng/rating";
 
 import {CalendarModule} from 'primeng/calendar';
@@ -41,6 +40,8 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import {CoursePaperService} from "./services/course-paper.service";
 import {AcademicYearService} from "./services/academic-year.service";
 import {FacultyService} from "./services/faculty.service";
+// import { AmplifyAuthenticatorModule } from '@aws-amplify/ui-angular';
+
 
 @NgModule({
   declarations: [
@@ -74,16 +75,17 @@ import {FacultyService} from "./services/faculty.service";
     ContextMenuModule,
     MultiSelectModule,
     SliderModule
+    // AmplifyAuthenticatorModule
   ],
   providers: [
-    CustomerService,
     CourseService,
     MessageService,
-    ProductService,
+    StudentService,
     ConfirmationService,
     CoursePaperService,
     AcademicYearService,
-    FacultyService
+    FacultyService,
+    StudentService
   ],
   bootstrap: [AppComponent]
 })

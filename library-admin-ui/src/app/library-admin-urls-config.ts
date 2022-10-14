@@ -8,19 +8,23 @@ export class LibraryAdminUrlsConfig {
   }
 
     public static get COURSES_URL(): string {
-        return this.PRODUCTION + "courses";
+        return this.ENVIROMENT + "courses";
     }
 
     public static get COURSE_PAPERS_URL(): string {
-        return this.PRODUCTION + "coursePapers";
+        return this.ENVIROMENT + "coursePapers";
     }
 
 
   public static get ACADEMIC_YEAR_URL(): string {
-    return this.PRODUCTION + "academicYear";
+    return this.ENVIROMENT + "academicYear";
   }
 
   public static get FACULTY_NAME_URL(): string {
-    return this.PRODUCTION + "faculty";
+    return this.ENVIROMENT + "faculty";
+  }
+
+  public static get STUDENT_URL(): string {
+    return this.ENVIROMENT + "students";
   }
 }

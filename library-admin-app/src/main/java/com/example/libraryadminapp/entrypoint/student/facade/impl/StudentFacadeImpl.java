@@ -1,16 +1,17 @@
 package com.example.libraryadminapp.entrypoint.student.facade.impl;
 
-import com.example.libraryadminapp.core.domain.coursepaper.request.CoursePaperUpdateRequestModel;
 import com.example.libraryadminapp.core.domain.student.request.StudentCreationRequestModel;
 import com.example.libraryadminapp.core.domain.student.service.StudentService;
-import com.example.libraryadminapp.entrypoint.coursepaper.controller.request.CoursePaperUpdateRequestDTO;
 import com.example.libraryadminapp.entrypoint.student.controller.request.StudentCreationRequestDTO;
+import com.example.libraryadminapp.entrypoint.student.controller.response.CoursePaymentInfoResponseDTO;
 import com.example.libraryadminapp.entrypoint.student.controller.response.StudentCoursePaperResponseDTO;
 import com.example.libraryadminapp.entrypoint.student.controller.response.StudentCourseResponseDTO;
 import com.example.libraryadminapp.entrypoint.student.facade.StudentFacade;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,15 +30,21 @@ public class StudentFacadeImpl implements StudentFacade {
     }
 
     @Override
-    public void assignCourseToStudent(final String courseName, final String studentName, final Long courseSlotId) {
+    public void verifyStudentMobileNumber(final String studentMobileNumber) throws IOException {
 
-        studentService.assignCourseToStudent(courseName, studentName, courseSlotId);
+        studentService.verifyStudentMobileNumber(studentMobileNumber);
     }
 
     @Override
-    public void assignCoursePaperToStudent(final String coursePaperName, final String studentName) {
+    public Integer assignCourseToStudent(final String courseName, final String studentName, final Long courseSlotId) {
 
-        studentService.assignCoursePaperToStudent(coursePaperName, studentName);
+        return studentService.assignCourseToStudent(courseName, studentName, courseSlotId);
+    }
+
+    @Override
+    public Integer assignCoursePaperToStudent(final String coursePaperName, final String studentName) {
+
+        return studentService.assignCoursePaperToStudent(coursePaperName, studentName);
     }
 
     @Override
@@ -71,6 +78,42 @@ public class StudentFacadeImpl implements StudentFacade {
                                 .price(studentCourseResponseModel.getPrice())
                                 .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<CoursePaymentInfoResponseDTO> getAllCoursesPaymentInfo() {
+        return studentService.getAllCoursesPaymentInfo()
+                .map(paymentInfoResponseModel -> CoursePaymentInfoResponseDTO
+                        .builder()
+                        .paymentNumber(paymentInfoResponseModel.getPaymentNumber())
+                        .studentName(paymentInfoResponseModel.getStudentName())
+                        .courseName(paymentInfoResponseModel.getCourseName())
+                        .build());
+    }
+
+    @Override
+    public Page<CoursePaymentInfoResponseDTO> getAllCoursePapersPaymentInfo() {
+
+        return studentService.getAllCoursePapersPaymentInfo()
+                .map(paymentInfoResponseModel -> CoursePaymentInfoResponseDTO
+                        .builder()
+                        .paymentNumber(paymentInfoResponseModel.getPaymentNumber())
+                        .studentName(paymentInfoResponseModel.getStudentName())
+                        .coursePaperName(paymentInfoResponseModel.getCoursePaperName())
+                        .build());
+    }
+
+    @Override
+    public Page<CoursePaymentInfoResponseDTO> searchByPaymentInfoNumber(Integer paymentInfoNumber) {
+
+        return studentService.searchByPaymentInfoNumber(paymentInfoNumber)
+                .map(paymentInfoResponseModel -> CoursePaymentInfoResponseDTO
+                        .builder()
+                        .paymentNumber(paymentInfoResponseModel.getPaymentNumber())
+                        .studentName(paymentInfoResponseModel.getStudentName())
+                        .coursePaperName(paymentInfoResponseModel.getCoursePaperName())
+                        .courseName(paymentInfoResponseModel.getCourseName())
+                        .build());
     }
 
     private StudentCreationRequestModel buildStudentCreationRequestModel(final StudentCreationRequestDTO studentCreationRequestDTO) {
