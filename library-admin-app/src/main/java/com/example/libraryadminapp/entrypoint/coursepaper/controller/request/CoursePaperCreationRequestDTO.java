@@ -20,4 +20,10 @@ public class CoursePaperCreationRequestDTO {
 
     @NotNull
     private BigDecimal price;
+
+    @NotBlank
+    private String academicYear;
+
+    @NotBlank
+    private String facultyName;
 }

@@ -9,8 +9,10 @@ import java.math.BigDecimal;
 @Builder
 public class CoursePaperCreationRequestModel {
 
-    private String coursePaperName;
-    private String subjectName;
-    private String professorName;
-    private BigDecimal price;
+    private final String coursePaperName;
+    private final String subjectName;
+    private final String professorName;
+    private final BigDecimal price;
+    private final String academicYear;
+    private final String facultyName;
 }

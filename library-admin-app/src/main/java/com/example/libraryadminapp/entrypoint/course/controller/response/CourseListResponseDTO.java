@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Builder
 @Setter
@@ -16,5 +17,8 @@ public class CourseListResponseDTO {
     private BigDecimal pricePerMonth;
     private String subjectName;
     private String professorName;
-    private Integer maxNumberOfBookings;
+    private String academicYear;
+    private String facultyName;
+    private List<CourseSlotResponseDTO> courseSlots;
+    private List<CoursePaperResponseDTO> coursePapers;
 }

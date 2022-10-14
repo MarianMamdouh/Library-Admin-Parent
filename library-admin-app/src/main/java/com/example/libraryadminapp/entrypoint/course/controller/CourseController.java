@@ -1,5 +1,7 @@
 package com.example.libraryadminapp.entrypoint.course.controller;
 
+import com.example.libraryadminapp.entrypoint.course.controller.request.CoursePaperRequestDTO;
+import com.example.libraryadminapp.entrypoint.course.controller.request.CourseSlotRequestDTO;
 import com.example.libraryadminapp.entrypoint.course.controller.request.CourseUpdateRequestDTO;
 import com.example.libraryadminapp.entrypoint.course.facade.CourseFacade;
 import com.example.libraryadminapp.entrypoint.course.controller.request.CourseCreationRequestDTO;
@@ -10,9 +12,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(path = CourseController.ROOT_PATH)
 @AllArgsConstructor
+@CrossOrigin
 public class CourseController {
 
     static final String ROOT_PATH = "/courses";
@@ -37,6 +42,47 @@ public class CourseController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @PutMapping("/{courseName}/coursePaper")
+    public ResponseEntity<?> addCoursePaperToCourse(
+            @PathVariable final String courseName,
+            @RequestBody final CoursePaperRequestDTO coursePaperRequestDTO) throws Exception {
+
+        courseFacade.addCoursePaperToCourse(courseName, coursePaperRequestDTO);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{courseName}/coursePaper")
+    public ResponseEntity<?> deleteCoursePaperFromCourse(
+            @PathVariable final String courseName,
+            @RequestParam final String coursePaperName) throws Exception {
+
+        courseFacade.deleteCoursePaperFromCourse(courseName, coursePaperName);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{courseName}/courseSlot")
+    public ResponseEntity<?> deleteCoursePaperFromCourse(
+            @PathVariable final String courseName,
+            @RequestParam final Long courseSlotId) throws Exception {
+
+        courseFacade.deleteCourseSlotFromCourse(courseName, courseSlotId);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PutMapping("/{courseName}/courseSlot")
+    public ResponseEntity<?> addCourseSlotToCourse(
+            @PathVariable final String courseName,
+            @RequestBody final CourseSlotRequestDTO courseSlotRequestDTO) throws Exception {
+
+        courseFacade.addCourseSlotToCourse(courseName, courseSlotRequestDTO);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+
     @DeleteMapping
     public ResponseEntity<?> deleteCourse(
             @RequestParam final String courseName) throws Exception {
@@ -51,5 +97,19 @@ public class CourseController {
     public Page<CourseListResponseDTO> getAllCourses() throws Exception {
 
         return courseFacade.getAllCourses();
+    }
+
+    @GetMapping("/student")
+    @ResponseStatus(HttpStatus.OK)
+    public List<CourseListResponseDTO> getAllAvailableCoursesForStudent(@RequestParam final String studentName) throws Exception {
+
+        return courseFacade.getAllAvailableCoursesForStudent(studentName);
+    }
+
+    @GetMapping("/search")
+    @ResponseStatus(HttpStatus.OK)
+    public List<CourseListResponseDTO> searchCourses(@RequestParam("searchName") String searchName) throws Exception {
+
+        return courseFacade.searchCourses(searchName);
     }
 }

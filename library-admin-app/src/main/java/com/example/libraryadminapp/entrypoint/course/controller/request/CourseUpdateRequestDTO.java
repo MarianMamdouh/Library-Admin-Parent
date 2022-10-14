@@ -22,7 +22,11 @@ public class CourseUpdateRequestDTO {
 
     private String professorName;
 
-    private Integer maxNumberOfBookings;
+    private String academicYear;
 
-    private List<CoursePaperRequestDTO> coursePapers;
+    private String facultyName;
+
+//    private List<CourseSlotRequestDTO> courseSlots;
+//
+//    private List<CoursePaperRequestDTO> coursePapers;
 }

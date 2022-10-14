@@ -26,8 +26,15 @@ public class CourseCreationRequestDTO {
     @NotBlank
     private String professorName;
 
+    @NotBlank
+    private String academicYear;
+
+    @NotBlank
+    private String facultyName;
+
     @NotNull
-    private Integer maxNumberOfBookings;
+    @Valid
+    private List<CourseSlotRequestDTO> courseSlots;
 
     @NotNull
     @Valid

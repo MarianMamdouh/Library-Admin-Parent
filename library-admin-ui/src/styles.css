@@ -1,1 +1,69 @@
 /* You can add global styles to this file, and also import other style files */
+body {
+  padding: 2em;
+  font-family: -apple-system, BlinkMacSystemFont, “Segoe UI”, Roboto, Helvetica, Arial, sans-serif, “Apple Color Emoji”, “Segoe UI Emoji”, “Segoe UI Symbol”;
+}
+
+.p-mr-2 {
+  margin-right: 0.5rem !important;
+}
+
+.p-mb-4 {
+  margin-bottom: 1.5rem !important;
+}
+
+.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  border-color: #20955C !important;
+  color: #20955C !important;
+}
+
+.p-dialog {
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  max-height: 90%;
+  transform: scale(1);
+  position: relative;
+}
+
+.p-dialog .p-dialog-header {
+  border-bottom: 0 none;
+  background: #ffffff;
+  color: #495057;
+  padding: 1.5rem;
+  border-top-right-radius: 3px;
+  border-top-left-radius: 3px;
+}
+
+.p-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.p-dialog .p-dialog-content {
+  background: #ffffff;
+  color: #495057;
+  padding: 0 1.5rem 2rem 1.5rem;
+}
+
+.p-dialog-content {
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.p-field {
+  margin-bottom: 1rem;
+}
+
+.course-dialogue {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  }
+
+.course-dialogue-label {
+
+  display: block;
+}

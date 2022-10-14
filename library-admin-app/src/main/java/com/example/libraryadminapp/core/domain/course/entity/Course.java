@@ -1,12 +1,13 @@
 package com.example.libraryadminapp.core.domain.course.entity;
 
-import com.example.libraryadminapp.core.domain.coursepaper.CoursePaper;
+import com.example.libraryadminapp.core.domain.academicyear.entity.AcademicYear;
+import com.example.libraryadminapp.core.domain.coursepaper.entity.CoursePaper;
+import com.example.libraryadminapp.core.domain.courseslot.entity.CourseSlot;
+import com.example.libraryadminapp.core.domain.faculty.entity.Faculty;
 import lombok.*;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -37,9 +38,17 @@ public class Course {
     @Column(nullable = false)
     private String subjectName;
 
-    @Column(nullable = false)
-    private Integer maxNumberOfBookings;
+    @OneToMany(mappedBy = "id")
+    private List<CourseSlot> courseSlots;
 
-    @OneToMany(mappedBy = "id", orphanRemoval = true)
-    private List<CoursePaper> coursePapers = new ArrayList<>();
+    @OneToMany(mappedBy = "id")
+    private List<CoursePaper> coursePapers;
+
+    @OneToOne
+    @JoinColumn(name = "academic_year_id")
+    private AcademicYear academicYear;
+
+    @OneToOne
+    @JoinColumn(name = "faculty_id")
+    private Faculty faculty;
 }

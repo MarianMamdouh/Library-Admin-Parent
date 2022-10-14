@@ -1,6 +1,8 @@
 package com.example.libraryadminapp.entrypoint.coursepaper.facade.impl;
 
+import com.example.libraryadminapp.core.domain.coursepaper.request.CoursePaperUpdateRequestModel;
 import com.example.libraryadminapp.entrypoint.coursepaper.controller.request.CoursePaperCreationRequestDTO;
+import com.example.libraryadminapp.entrypoint.coursepaper.controller.request.CoursePaperUpdateRequestDTO;
 import com.example.libraryadminapp.entrypoint.coursepaper.facade.CoursePaperFacade;
 import com.example.libraryadminapp.core.domain.coursepaper.request.CoursePaperCreationRequestModel;
 import com.example.libraryadminapp.core.domain.coursepaper.service.CoursePaperService;
@@ -8,6 +10,9 @@ import com.example.libraryadminapp.entrypoint.coursepaper.controller.response.Co
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @AllArgsConstructor
@@ -23,17 +28,69 @@ public class CoursePaperFacadeImpl implements CoursePaperFacade {
     }
 
     @Override
-    public Page<CoursePaperListResponseDTO> getAllCoursePapers() {
+    public void updateCoursePaper(final CoursePaperUpdateRequestDTO coursePaperUpdateRequestDTO) {
 
-        return coursePaperService.getAllCoursePapers().map(coursePaperListResponseModel ->
+        final CoursePaperUpdateRequestModel coursePaperUpdateRequestModel = buildCoursePaperUpdateRequestModel(coursePaperUpdateRequestDTO);
+
+        coursePaperService.updateCoursePaper(coursePaperUpdateRequestModel);
+    }
+
+    @Override
+    public void deleteCoursePaper(final String coursePaperName) {
+
+        coursePaperService.deleteCoursePaper(coursePaperName);
+
+    }
+
+    @Override
+    public List<CoursePaperListResponseDTO> getAllCoursePapers() {
+
+        return coursePaperService.getAllCoursePapers()
+                .stream()
+                .map(coursePaperListResponseModel ->
                 CoursePaperListResponseDTO
                         .builder()
-                        .courseName(coursePaperListResponseModel.getCoursePaperName())
+                        .coursePaperName(coursePaperListResponseModel.getCoursePaperName())
                         .subjectName(coursePaperListResponseModel.getSubjectName())
                         .professorName(coursePaperListResponseModel.getProfessorName())
                         .price(coursePaperListResponseModel.getPrice())
-                        .numOfCopies(coursePaperListResponseModel.getNumOfCopies())
-                        .build());
+                        .academicYear(coursePaperListResponseModel.getAcademicYear())
+                        .facultyName(coursePaperListResponseModel.getFacultyName())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CoursePaperListResponseDTO> searchCoursePapers(final String searchName) {
+
+        return coursePaperService.searchCoursePapers(searchName)
+                .stream()
+                .map(coursePaperListResponseModel ->
+                CoursePaperListResponseDTO
+                        .builder()
+                        .coursePaperName(coursePaperListResponseModel.getCoursePaperName())
+                        .subjectName(coursePaperListResponseModel.getSubjectName())
+                        .professorName(coursePaperListResponseModel.getProfessorName())
+                        .price(coursePaperListResponseModel.getPrice())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CoursePaperListResponseDTO> getAllAvailableCoursePapersForStudent(String studentName) {
+
+        return coursePaperService.getAllAvailableCoursePapersForStudent(studentName).stream()
+                .map(coursePaperListResponseModel ->
+                        CoursePaperListResponseDTO
+                                .builder()
+                                .coursePaperName(coursePaperListResponseModel.getCoursePaperName())
+                                .subjectName(coursePaperListResponseModel.getSubjectName())
+                                .professorName(coursePaperListResponseModel.getProfessorName())
+                                .price(coursePaperListResponseModel.getPrice())
+                                .academicYear(coursePaperListResponseModel.getAcademicYear())
+                                .facultyName(coursePaperListResponseModel.getFacultyName())
+                                .build())
+                .collect(Collectors.toList());
     }
 
     private CoursePaperCreationRequestModel buildCoursePaperCreationRequestModel(final CoursePaperCreationRequestDTO coursePaperCreationRequestDTO) {
@@ -44,6 +101,21 @@ public class CoursePaperFacadeImpl implements CoursePaperFacade {
                 .subjectName(coursePaperCreationRequestDTO.getSubjectName())
                 .professorName(coursePaperCreationRequestDTO.getProfessorName())
                 .price(coursePaperCreationRequestDTO.getPrice())
+                .academicYear(coursePaperCreationRequestDTO.getAcademicYear())
+                .facultyName(coursePaperCreationRequestDTO.getFacultyName())
+                .build();
+    }
+
+    private CoursePaperUpdateRequestModel buildCoursePaperUpdateRequestModel(final CoursePaperUpdateRequestDTO coursePaperUpdateRequestDTO) {
+
+        return CoursePaperUpdateRequestModel
+                .builder()
+                .coursePaperName(coursePaperUpdateRequestDTO.getCoursePaperName())
+                .subjectName(coursePaperUpdateRequestDTO.getSubjectName())
+                .professorName(coursePaperUpdateRequestDTO.getProfessorName())
+                .price(coursePaperUpdateRequestDTO.getPrice())
+                .academicYear(coursePaperUpdateRequestDTO.getAcademicYear())
+                .facultyName(coursePaperUpdateRequestDTO.getFacultyName())
                 .build();
     }
 }

@@ -15,6 +15,8 @@ public class CourseRequestModel {
     private final BigDecimal pricePerMonth;
     private final String subjectName;
     private final String professorName;
-    private final Integer maxNumberOfBookings;
+    private final String academicYear;
+    private final String facultyName;
+    private final List<CourseSlotRequestModel> courseSlots;
     private final List<CoursePaperRequestModel> coursePapers;
 }

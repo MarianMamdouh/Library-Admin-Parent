@@ -11,9 +11,14 @@ public class CoursePaperRequestDTO {
 
     @NotBlank
     private String coursePaperName;
-
+    @NotBlank
+    private String subjectName;
+    @NotBlank
+    private String professorName;
+    @NotBlank
+    private String academicYear;
+    @NotBlank
+    private String facultyName;
     @NotNull
     private BigDecimal price;
-
-    private Integer numOfCopies;
 }

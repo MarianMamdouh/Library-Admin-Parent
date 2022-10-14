@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -31,6 +32,7 @@ public class CourseRepositoryImpl implements CourseRepository {
     }
 
     @Override
+    @Transactional
     public Page<Course> findAll() {
 
         return courseJpaRepository.findAll(Pageable.unpaged());
@@ -41,5 +43,17 @@ public class CourseRepositoryImpl implements CourseRepository {
     public void deleteByCourseName(String courseName) {
 
         courseJpaRepository.deleteByCourseName(courseName);
+    }
+
+    @Override
+    public List<Course> findAllByCourseNameOrSubjectNameOrProfessorName(String searchName) {
+
+        return courseJpaRepository.findAllByCourseNameOrSubjectNameOrProfessorName(searchName, searchName, searchName);
+    }
+
+    @Override
+    public List<Course> findAllByAcademicYearAndFacultyName(String academicYear, String facultyName) {
+
+        return courseJpaRepository.findAllByAcademicYear_YearAndFaculty_Name(academicYear, facultyName);
     }
 }

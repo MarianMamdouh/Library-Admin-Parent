@@ -13,5 +13,6 @@ public class CoursePaperListResponseModel {
     private final String subjectName;
     private final String professorName;
     private final BigDecimal price;
-    private final Integer numOfCopies;
+    private final String academicYear;
+    private final String facultyName;
 }

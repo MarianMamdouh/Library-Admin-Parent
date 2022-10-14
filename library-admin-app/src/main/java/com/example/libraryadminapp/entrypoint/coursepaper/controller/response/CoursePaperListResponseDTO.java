@@ -11,8 +11,10 @@ import java.math.BigDecimal;
 @Setter
 public class CoursePaperListResponseDTO {
 
-    private String courseName;
+    private String coursePaperName;
     private String subjectName;
     private String professorName;
     private BigDecimal price;
-    private Integer numOfCopies;}
+    private String academicYear;
+    private String facultyName;
+}

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { JumiaUrlsConfig } from '../jumia-urls-config';
+import { LibraryAdminUrlsConfig } from '../library-admin-urls-config';
 
 @Injectable()
 export class CustomerService {
@@ -9,7 +9,7 @@ export class CustomerService {
     }
 
     public filterCustomers(params: string, selectedPage?: number, pageSize?: number): Promise<any> {
-        return this.http.get(JumiaUrlsConfig.CUSTOMERS_FILTER_URL + params + (!pageSize ? '' : "size=" + pageSize + "&page=" + selectedPage))
+        return this.http.get(LibraryAdminUrlsConfig.COURSE_PAPERS_URL + params + (!pageSize ? '' : "size=" + pageSize + "&page=" + selectedPage))
             .toPromise()
             .catch(err => {
                 return Promise.reject(err.message || err);

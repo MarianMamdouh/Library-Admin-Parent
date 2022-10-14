@@ -10,6 +10,4 @@ public class CoursePaperUpdateRequestDTO {
     private String coursePaperName;
 
     private BigDecimal price;
-
-    private Integer numOfCopies;
 }
