@@ -1,0 +1,1 @@
+ALTER table `student` ADD `fcm_token` varchar(255)  null;

@@ -3,14 +3,21 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {AppRoutingModule} from './app-routing.module';
 
 //Components
 import { AppComponent } from './app.component';
 import { LibraryAdminDashboardComponent } from './library-admin-dashboard/library-admin-dashboard.component';
+import { LoginComponent } from './login/login.component';
 
 //Services
 import { CourseService } from "./services/course.service";
+import { LoginService } from "./services/login.service";
+import {CoursePaperService} from "./services/course-paper.service";
+import {AcademicYearService} from "./services/academic-year.service";
+import {FacultyService} from "./services/faculty.service";
+import {AuthGuard} from './auth.guard';
 
 //Primeng UI Components
 import { TableModule } from 'primeng/table';
@@ -27,7 +34,6 @@ import {DialogModule} from "primeng/dialog";
 import {RadioButtonModule} from "primeng/radiobutton";
 import {StudentService} from "./services/student.service";
 import {RatingModule} from "primeng/rating";
-
 import {CalendarModule} from 'primeng/calendar';
 import {SliderModule} from 'primeng/slider';
 import {MultiSelectModule} from 'primeng/multiselect';
@@ -37,15 +43,16 @@ import {ProgressBarModule} from 'primeng/progressbar';
 import {InputTextModule} from 'primeng/inputtext';
 import {InputNumberModule} from 'primeng/inputnumber';
 import { InputTextareaModule } from 'primeng/inputtextarea';
-import {CoursePaperService} from "./services/course-paper.service";
-import {AcademicYearService} from "./services/academic-year.service";
-import {FacultyService} from "./services/faculty.service";
+import {InputSwitchModule} from 'primeng/inputswitch';
+
+import {PanelModule} from "primeng/panel";
 // import { AmplifyAuthenticatorModule } from '@aws-amplify/ui-angular';
 
 
 @NgModule({
   declarations: [
     AppComponent,
+    LoginComponent,
     LibraryAdminDashboardComponent
   ],
   imports: [
@@ -74,8 +81,11 @@ import {FacultyService} from "./services/faculty.service";
     DropdownModule,
     ContextMenuModule,
     MultiSelectModule,
-    SliderModule
-    // AmplifyAuthenticatorModule
+    SliderModule,
+    PanelModule,
+    ReactiveFormsModule,
+    AppRoutingModule,
+    InputSwitchModule
   ],
   providers: [
     CourseService,
@@ -85,7 +95,9 @@ import {FacultyService} from "./services/faculty.service";
     CoursePaperService,
     AcademicYearService,
     FacultyService,
-    StudentService
+    StudentService,
+    LoginService,
+    AuthGuard
   ],
   bootstrap: [AppComponent]
 })

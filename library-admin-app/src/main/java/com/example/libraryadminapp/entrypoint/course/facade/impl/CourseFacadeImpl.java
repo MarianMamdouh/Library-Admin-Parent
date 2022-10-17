@@ -2,10 +2,8 @@ package com.example.libraryadminapp.entrypoint.course.facade.impl;
 
 import com.example.libraryadminapp.core.domain.course.request.CoursePaperRequestModel;
 import com.example.libraryadminapp.core.domain.course.request.CourseSlotRequestModel;
-import com.example.libraryadminapp.core.domain.course.response.CourseListResponseModel;
 import com.example.libraryadminapp.core.domain.course.response.CoursePaperResponseModel;
 import com.example.libraryadminapp.core.domain.course.response.CourseSlotResponseModel;
-import com.example.libraryadminapp.core.domain.courseslot.entity.CourseSlot;
 import com.example.libraryadminapp.entrypoint.course.controller.request.CoursePaperRequestDTO;
 import com.example.libraryadminapp.entrypoint.course.controller.request.CourseSlotRequestDTO;
 import com.example.libraryadminapp.entrypoint.course.controller.request.CourseUpdateRequestDTO;
@@ -20,7 +18,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,13 +94,14 @@ public class CourseFacadeImpl implements CourseFacade {
                             .coursePapers(courseListResponseModel.getCoursePapers().stream()
                                     .map(this::buildCoursePaperResponseModel)
                                     .collect(Collectors.toList()))
-                            .build());
+                            .build()
+                );
     }
 
     @Override
-    public List<CourseListResponseDTO> searchCourses(final String searchName) {
+    public List<CourseListResponseDTO> searchCoursesByMobileNumber(final String searchTerm, final String mobileName) {
 
-        return courseService.searchCourses(searchName)
+        return courseService.searchCoursesByMobileNumber(searchTerm, mobileName)
                 .stream()
                 .map(courseListResponseModel ->
                         CourseListResponseDTO
@@ -121,14 +119,16 @@ public class CourseFacadeImpl implements CourseFacade {
                                 .coursePapers(courseListResponseModel.getCoursePapers().stream()
                                         .map(this::buildCoursePaperResponseModel)
                                         .collect(Collectors.toList()))
-                                .build())
-                .collect(Collectors.toList());
+                                .courseStatus(courseListResponseModel.getCourseStatus())
+                                .build()
+                ).collect(Collectors.toList());
     }
-    @Override
-    public List<CourseListResponseDTO> getAllAvailableCoursesForStudent(String studentName) {
 
-        return courseService.getAllAvailableCoursesForStudent(studentName)
-                .stream().map(courseListResponseModel ->
+    @Override
+    public Page<CourseListResponseDTO> searchCourses(final String searchName) {
+
+        return courseService.searchCourses(searchName)
+                .map(courseListResponseModel ->
                         CourseListResponseDTO
                                 .builder()
                                 .courseName(courseListResponseModel.getCourseName())
@@ -144,7 +144,33 @@ public class CourseFacadeImpl implements CourseFacade {
                                 .coursePapers(courseListResponseModel.getCoursePapers().stream()
                                         .map(this::buildCoursePaperResponseModel)
                                         .collect(Collectors.toList()))
-                                .build()).collect(Collectors.toList());
+                                .build());
+    }
+    @Override
+    public List<CourseListResponseDTO> getAllAvailableCoursesForStudent(String mobileNumber) {
+
+        return courseService.getAllAvailableCoursesForStudent(mobileNumber)
+                .stream()
+                .map(courseListResponseModel ->
+                        CourseListResponseDTO
+                                .builder()
+                                .courseName(courseListResponseModel.getCourseName())
+                                .pricePerSemester(courseListResponseModel.getPricePerSemester())
+                                .pricePerMonth(courseListResponseModel.getPricePerMonth())
+                                .subjectName(courseListResponseModel.getSubjectName())
+                                .professorName(courseListResponseModel.getProfessorName())
+                                .academicYear(courseListResponseModel.getAcademicYear())
+                                .facultyName(courseListResponseModel.getFacultyName())
+                                .courseSlots(courseListResponseModel.getCourseSlots().stream()
+                                        .map(this::buildCourseSlotResponseModel)
+                                        .collect(Collectors.toList()))
+                                .coursePapers(courseListResponseModel.getCoursePapers().stream()
+                                        .map(this::buildCoursePaperResponseModel)
+                                        .collect(Collectors.toList()))
+                                .courseStatus(courseListResponseModel.getCourseStatus())
+                                .build()
+                )
+                .collect(Collectors.toList());
     }
 
     private CourseRequestModel buildCourseCreationRequestModel(final CourseCreationRequestDTO courseCreationRequestDTO) {
@@ -180,14 +206,6 @@ public class CourseFacadeImpl implements CourseFacade {
                 .professorName(courseUpdateRequestDTO.getProfessorName())
                 .academicYear(courseUpdateRequestDTO.getAcademicYear())
                 .facultyName(courseUpdateRequestDTO.getFacultyName())
-//                .courseSlots(courseUpdateRequestDTO.getCourseSlots()
-//                        .stream()
-//                        .map(this::buildCourseSlotRequestModel)
-//                        .collect(Collectors.toList()))
-//                .coursePapers(courseUpdateRequestDTO.getCoursePapers()
-//                        .stream()
-//                        .map(this::buildCoursePaperRequestModel)
-//                        .collect(Collectors.toList()))
                 .build();
     }
 
@@ -239,6 +257,7 @@ public class CourseFacadeImpl implements CourseFacade {
                 .startTime(courseSlotResponseModel.getStartTime())
                 .endTime(courseSlotResponseModel.getEndTime())
                 .maxNumberOfBookings(courseSlotResponseModel.getMaxNumberOfBookings())
+                .currentNumberOfBookings(courseSlotResponseModel.getCurrentNumberOfBookings())
                 .build();
     }
 }

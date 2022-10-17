@@ -4,4 +4,6 @@ export interface PaymentInfo {
   coursePaperName?:string;
   studentName?:string;
   paymentNumber?:number;
+  deliveryAddress?:string;
+
 }

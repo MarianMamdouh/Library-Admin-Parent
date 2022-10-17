@@ -19,5 +19,6 @@ public class CourseListResponseModel {
     private final String facultyName;
     private final List<CourseSlotResponseModel> courseSlots;
     private final List<CoursePaperResponseModel> coursePapers;
+    private final String courseStatus;
 
 }

@@ -1,0 +1,22 @@
+.form {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 10px;
+}
+
+.ui-grid-row {
+
+  margin: 10px;
+}
+
+.p-inputtext:enabled:hover {
+
+  border-color: #20955C !important;
+}
+
+.p-inputtext:enabled:focus {
+  box-shadow: 0 0 0 0.2rem #20955C !important;
+  border-color: #20955C !important;
+}

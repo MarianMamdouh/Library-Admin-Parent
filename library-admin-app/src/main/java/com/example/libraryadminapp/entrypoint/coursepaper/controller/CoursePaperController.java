@@ -52,24 +52,29 @@ public class CoursePaperController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<CoursePaperListResponseDTO> getAllCoursePapers() throws Exception {
+    public Page<CoursePaperListResponseDTO> getAllCoursePapers() throws Exception {
 
        return coursePaperFacade.getAllCoursePapers();
     }
 
     @GetMapping("/student")
     @ResponseStatus(HttpStatus.OK)
-    public List<CoursePaperListResponseDTO> getAllAvailableCoursePapersForStudent(@RequestParam final String studentName) throws Exception {
+    public List<CoursePaperListResponseDTO> getAllAvailableCoursePapersForStudent(@RequestParam("mobileNumber") final String mobileNumber) throws Exception {
 
-        return coursePaperFacade.getAllAvailableCoursePapersForStudent(studentName);
+        return coursePaperFacade.getAllAvailableCoursePapersForStudent(mobileNumber);
     }
 
     @GetMapping("/search")
     @ResponseStatus(HttpStatus.OK)
-    public List<CoursePaperListResponseDTO> searchCoursePapers(@RequestParam("searchName") String searchName) throws Exception {
+    public Page<CoursePaperListResponseDTO> searchCoursePapers(@RequestParam("searchName") final String searchName) throws Exception {
 
         return coursePaperFacade.searchCoursePapers(searchName);
     }
 
+    @GetMapping("/searchByMobileNumber")
+    @ResponseStatus(HttpStatus.OK)
+    public List<CoursePaperListResponseDTO> searchCoursePapersByMobileNumber(@RequestParam("searchName") final String searchName, @RequestParam("mobileNumber") final String mobileNumber ) throws Exception {
 
+        return coursePaperFacade.searchCoursePapersByMobileNumber(searchName, mobileNumber);
+    }
 }

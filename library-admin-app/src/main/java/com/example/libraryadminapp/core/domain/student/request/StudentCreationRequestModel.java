@@ -9,6 +9,8 @@ public class StudentCreationRequestModel {
 
     private final String studentName;
     private final String mobileNumber;
+    private final String password;
     private final String academicYear;
     private final String facultyName;
+
 }

@@ -1,5 +1,7 @@
 package com.example.libraryadminapp.core.domain.student.service.impl;
 
+import com.example.libraryadminapp.core.domain.auth.userdetails.service.impl.UserDetailsImpl;
+import com.example.libraryadminapp.core.domain.auth.utils.JwtUtils;
 import com.example.libraryadminapp.core.domain.course.entity.Course;
 import com.example.libraryadminapp.core.domain.course.repository.CourseRepository;
 import com.example.libraryadminapp.core.domain.coursepaper.entity.CoursePaper;
@@ -11,6 +13,8 @@ import com.example.libraryadminapp.core.domain.paymentinfo.repository.PaymentInf
 import com.example.libraryadminapp.core.domain.student.entity.Student;
 import com.example.libraryadminapp.core.domain.student.repository.StudentRepository;
 import com.example.libraryadminapp.core.domain.student.request.StudentCreationRequestModel;
+import com.example.libraryadminapp.core.domain.student.request.StudentLoginRequestModel;
+import com.example.libraryadminapp.core.domain.student.response.StudentLoginResponseModel;
 import com.example.libraryadminapp.core.domain.student.response.CoursePaymentInfoResponseModel;
 import com.example.libraryadminapp.core.domain.student.response.StudentCoursePaperResponseModel;
 import com.example.libraryadminapp.core.domain.student.response.StudentCourseResponseModel;
@@ -18,14 +22,22 @@ import com.example.libraryadminapp.core.domain.student.service.StudentService;
 import com.example.libraryadminapp.core.domain.student.utils.Status;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,66 +49,150 @@ public class StudentServiceImpl implements StudentService {
     private final CoursePaperRepository coursePaperRepository;
     private final CourseSlotRepository courseSlotRepository;
     private final PaymentInfoRepository paymentInfoRepository;
+    private final PasswordEncoder encoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
 
-    public void createStudent(final StudentCreationRequestModel studentCreationRequestModel) {
+    public void createStudent(final StudentCreationRequestModel studentCreationRequestModel) throws IOException {
+
+        if (studentRepository.existsByMobileNumber(studentCreationRequestModel.getMobileNumber())) {
+
+            throw new IllegalArgumentException("Mobile number " + studentCreationRequestModel.getMobileNumber() + " already exists");
+
+        }
+
+        validateMobileNumber(studentCreationRequestModel.getMobileNumber());
 
         final Student student = buildStudentEntity(studentCreationRequestModel);
 
+        final String otp = verifyStudentMobileNumber(student.getMobileNumber());
+
+        student.setOtp(otp);
+
+        studentRepository.save(student);
+
+    }
+
+    private void validateMobileNumber(final String mobileNumber) {
+
+        final Pattern pattern = Pattern.compile("^01[0125][0-9]{8}$");
+        final Matcher matcher = pattern.matcher(mobileNumber);
+
+        if(!matcher.matches()) {
+
+            throw new IllegalArgumentException("Mobile number format is incorrect");
+        }
+    }
+
+    @Override
+    public StudentLoginResponseModel login(final StudentLoginRequestModel studentLoginModel) {
+
+        final Optional<Student> studentOptional = studentRepository.findByMobileNumber(studentLoginModel.getMobileNumber());
+        String username = "";
+
+        if (studentOptional.isPresent()) {
+            if (Status.INACTIVE.equals(studentOptional.get().getStatus())) {
+
+                throw new IllegalArgumentException("Mobile number hasn't been activated yet!");
+            }
+            username = studentOptional.get().getStudentName();
+        }
+
+        final Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, studentLoginModel.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        final String jwt = jwtUtils.generateJwtToken(authentication);
+
+        final UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+
+        return StudentLoginResponseModel
+                .builder()
+                .jwtToken(jwt)
+                .mobileNumber(userDetails.getMobileNumber())
+                .studentName(userDetails.getUsername()).build();
+    }
+
+    @Override
+    public void verifyStudentOTP(String otp, String mobileNumber) throws IOException {
+
+        if(!studentRepository.existsByMobileNumberAndOTP(mobileNumber, otp)) {
+
+            throw new IllegalArgumentException("OTP is incorrect, Please recheck and try again!");
+        }
+
+        final Student student = studentRepository.findByMobileNumber(mobileNumber).get();
+
+        student.setStatus(Status.ACTIVE);
         studentRepository.save(student);
     }
 
     @Override
-    public void verifyStudentMobileNumber(final String studentMobileNumber) throws IOException {
+    public void setFCMToken(final String fcmToken, final String mobileNumber) throws IOException {
 
-        URL url = new URL("https://apis.cequens.com/sms/v1/messages");
-        HttpURLConnection http = (HttpURLConnection)url.openConnection();
+        final Student student = studentRepository.findByMobileNumber(mobileNumber).orElseThrow(() ->
+                new IllegalArgumentException("Student with mobile number " + mobileNumber + " can't be found")
+        );
+
+        student.setFcmToken(fcmToken);
+
+        studentRepository.save(student);
+    }
+
+    public String verifyStudentMobileNumber(final String studentMobileNumber) throws IOException {
+
+        final URL url = new URL("https://apis.cequens.com/sms/v1/messages");
+        final HttpURLConnection http = (HttpURLConnection)url.openConnection();
         http.setRequestMethod("POST");
         http.setDoOutput(true);
         http.setRequestProperty("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6ImExOTIzYzViNzljOWRkOTgzZTZkZWY3MDg0NjM4YWM4ZTU4ODkzN2ZlYzM2MjM1Y2FmY2YwZGUzM2JjMDYxMzBiMTY3ZTU1MTFlMzk1YTAyMDA4YTgyOTgzYTUwMzJkNmU2MjQxY2UxYmViNzA0OWYwZDU4ZWIyMWUzZjI2MzZiNzQ4ODU5ZGRmMjY1M2ViNjk1OTg0ZGFhN2MyMzA0ZDkiLCJpYXQiOjE2NjU1Nzk3NTMsImV4cCI6MzI0MzQ1OTc1M30.OySNLJ6epmKB2hd7PnHyUvh6y7HRnmjOMKge-tMc02M");
         http.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 
-        Random random = new Random();
-        String verificationCode = String.format("%04d", random.nextInt(10000));
+        final Random random = new Random();
+        final String verificationCode = String.format("%04d", random.nextInt(10000));
 
-        String data = "{\n  \"senderName\": \"SuperOnline\",\n  \"messageType\": \"text\",\n  \"acknowledgement\": 1,\n  \"messageText\": \"hello from aplus,here is your verification code " + verificationCode + "\",\n  \"recipients\": \"" + studentMobileNumber + "\"\n}";
+        final String data = "{\n  \"senderName\": \"SuperOnline\",\n  \"messageType\": \"text\",\n  \"acknowledgement\": 1,\n  \"messageText\": \"أهلا بك في مكتبة A Plus, كود التفعيل:  " + verificationCode + "\",\n  \"recipients\": \"" + studentMobileNumber + "\"\n}";
 
-        System.out.println(data);
+        final byte[] out = data.getBytes(StandardCharsets.UTF_8);
 
-        byte[] out = data.getBytes(StandardCharsets.UTF_8);
-
-        OutputStream stream = http.getOutputStream();
+        final OutputStream stream = http.getOutputStream();
         stream.write(out);
 
         System.out.println(http.getResponseCode() + " " + http.getResponseMessage());
         http.disconnect();
+
+        return verificationCode;
     }
 
     @Override
-    public Integer assignCourseToStudent(final String courseName, final String studentName, final Long courseSlotId) {
+    public Integer assignCourseToStudent(final String courseName, final String mobileNumber, final Long courseSlotId) {
 
-        final Optional<Course> course = courseRepository.findByCourseName(courseName);
+        final Course course = courseRepository.findByCourseName(courseName)
+                .orElseThrow(() -> new IllegalArgumentException("Course " + courseName + "can't be found"));
 
-        final List<CourseSlot> courseSlots = courseSlotRepository.findAllByCourseId(course.get().getId());
+        final Student student = findByMobileNumber(mobileNumber);
 
-
-        // should i make a check if number of current bookings = max
-
-        final Student student = studentRepository.findByStudentName(studentName).get();
-
+        final List<CourseSlot> courseSlots = courseSlotRepository.findAllByCourseId(course.getId());
 
         if (student.getCourseSlots()
                 .stream()
                 .map(CourseSlot::getId)
                 .anyMatch(courseSlotId::equals)) {
 
-            //throw an error that student is already assigned to this course
-//            return ;
+            throw new IllegalArgumentException("Student with mobile number " + mobileNumber + " is already assigned to this course " + courseName);
         }
 
         final CourseSlot courseSlot = courseSlots
                 .stream()
                 .filter(courseSlot1 -> courseSlot1.getId().equals(courseSlotId))
-                .findFirst().get();
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Selected Course Slot can't be found for course " + courseName));
+
+        if (Objects.equals(courseSlot.getMaximumNumberOfBookings(), courseSlot.getCurrentNumberOfBookings())) {
+
+            throw new IllegalArgumentException("Selected Course Slot for course " + courseName + " is full");
+        }
 
         student.getCourseSlots().add(courseSlot);
         studentRepository.save(student);
@@ -104,12 +200,12 @@ public class StudentServiceImpl implements StudentService {
         courseSlot.setCurrentNumberOfBookings(courseSlot.getCurrentNumberOfBookings() + 1);
         courseSlotRepository.save(courseSlot);
 
-        Random random =  new  Random();
-        Integer paymentNumber = random.nextInt() + student.getId().intValue();
-        PaymentInfo paymentInfo = PaymentInfo.builder()
+        final Random random = new Random();
+        final Integer paymentNumber =  random.nextInt() & Integer.MAX_VALUE;
+        final PaymentInfo paymentInfo = PaymentInfo.builder()
                 .paymentNumber(paymentNumber)
                 .student(student)
-                .course(course.get())
+                .course(course)
                 .build();
 
         paymentInfoRepository.save(paymentInfo);
@@ -118,42 +214,43 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public Integer assignCoursePaperToStudent(final String coursePaperName, final String studentName) {
+    public Integer assignCoursePaperToStudent(final String coursePaperName, final String mobileNumber, final String deliveryAddress) {
 
-        final Optional<CoursePaper> coursePaper = coursePaperRepository.findByName(coursePaperName);
+        final CoursePaper coursePaper = coursePaperRepository.findByName(coursePaperName)
+                .orElseThrow(() -> new IllegalArgumentException("Course Paper " + coursePaperName + " can't be found"));
 
-        final Student student = studentRepository.findByStudentName(studentName).get();
+        final Student student = findByMobileNumber(mobileNumber);
 
-        if (student.getCoursePapers()
-                .stream()
-                .map(CoursePaper::getCoursePaperName)
-                .anyMatch(coursePaperName::equals)) {
+//        if (student.getCoursePapers()
+//                .stream()
+//                .map(CoursePaper::getCoursePaperName)
+//                .anyMatch(coursePaperName::equals)) {
+//
+//            throw new IllegalArgumentException("Student with mobile number " + mobileNumber + " is already assigned to this course paper " + coursePaperName);
+//        }
 
-            // throw an error that student is already assigned to this course.
-//            return;
-        }
-
-        student.getCoursePapers().add(coursePaper.get());
+        student.getCoursePapers().add(coursePaper);
         studentRepository.save(student);
 
-        Random random =  new  Random();
-        Integer paymentNumber = random.nextInt() + student.getId().intValue();
-        PaymentInfo paymentInfo = PaymentInfo.builder()
+        final Random random = new Random();
+        final Integer paymentNumber =  random.nextInt() & Integer.MAX_VALUE;
+        final PaymentInfo paymentInfo = PaymentInfo.builder()
                 .paymentNumber(paymentNumber)
                 .student(student)
-                .coursePaper(coursePaper.get())
+                .coursePaper(coursePaper)
+                .deliveryAddress(deliveryAddress)
                 .build();
 
         paymentInfoRepository.save(paymentInfo);
         return paymentNumber;
-
     }
 
     @Override
-    public List<StudentCourseResponseModel> getAllCoursesBookings(final String studentName) {
+    public List<StudentCourseResponseModel> getAllCoursesBookings(final String mobileNumber) {
 
-        final Student student = studentRepository.findByStudentName(studentName).get();
+        final Student student = findByMobileNumber(mobileNumber);
 
+        //todo
         final List<CourseSlot> courseSlots = student.getCourseSlots();
 
         final List<Course> courses = courseSlots
@@ -161,19 +258,18 @@ public class StudentServiceImpl implements StudentService {
                 .map(CourseSlot::getCourse)
                 .collect(Collectors.toList());
 
-        return courses.stream()
-                .map(this::buildStudentCourseResponseModel)
-                .collect(Collectors.toList());
+        return courses.stream().map(this::buildStudentCourseResponseModel).collect(Collectors.toList());
     }
 
     @Override
-    public List<StudentCoursePaperResponseModel> getAllCoursePapersBookings(final String studentName) {
+    public List<StudentCoursePaperResponseModel> getAllCoursePapersBookings(final String mobileNumber) {
 
-        final Student student = studentRepository.findByStudentName(studentName).get();
+        final Student student = findByMobileNumber(mobileNumber);
 
         final List<CoursePaper> coursePapers = student.getCoursePapers();
 
-        return coursePapers.stream()
+        return coursePapers
+                .stream()
                 .map(this::buildStudentCoursePaperResponseModel)
                 .collect(Collectors.toList());
     }
@@ -185,7 +281,7 @@ public class StudentServiceImpl implements StudentService {
                 .map(paymentInfo ->
                         CoursePaymentInfoResponseModel.builder()
                                 .studentName(paymentInfo.getStudent().getStudentName())
-                                .courseName(Objects.nonNull(paymentInfo.getCourse())? paymentInfo.getCourse().getCourseName(): null)
+                                .courseName(paymentInfo.getCourse().getCourseName())
                                 .paymentNumber(paymentInfo.getPaymentNumber())
                                 .build()
         );
@@ -200,22 +296,91 @@ public class StudentServiceImpl implements StudentService {
                                 .studentName(paymentInfo.getStudent().getStudentName())
                                 .coursePaperName(paymentInfo.getCoursePaper().getCoursePaperName())
                                 .paymentNumber(paymentInfo.getPaymentNumber())
+                                .deliveryAddress(paymentInfo.getDeliveryAddress())
                                 .build()
                 );
     }
 
     @Override
-    public Page<CoursePaymentInfoResponseModel> searchByPaymentInfoNumber(final Integer paymentInfoNumber) {
+    public CoursePaymentInfoResponseModel searchByPaymentInfoNumber(final Integer paymentInfoNumber) {
 
-        return paymentInfoRepository.findByPaymentNumber(paymentInfoNumber)
-                .map(paymentInfo ->
-                        CoursePaymentInfoResponseModel.builder()
-                                .studentName(paymentInfo.getStudent().getStudentName())
-                                .coursePaperName(Objects.nonNull(paymentInfo.getCoursePaper())? paymentInfo.getCoursePaper().getCoursePaperName(): null)
-                                .courseName(Objects.nonNull(paymentInfo.getCourse())? paymentInfo.getCourse().getCourseName(): null)
-                                .paymentNumber(paymentInfo.getPaymentNumber())
-                                .build()
-                );    }
+        PaymentInfo paymentInfo = paymentInfoRepository.findByPaymentNumber(paymentInfoNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Payment info with number " + paymentInfoNumber + " can't be found"));
+
+        return CoursePaymentInfoResponseModel.builder()
+                .studentName(paymentInfo.getStudent().getStudentName())
+                .coursePaperName(Objects.nonNull(paymentInfo.getCoursePaper())? paymentInfo.getCoursePaper().getCoursePaperName(): null)
+                .courseName(Objects.nonNull(paymentInfo.getCourse())? paymentInfo.getCourse().getCourseName(): null)
+                .paymentNumber(paymentInfo.getPaymentNumber())
+                .deliveryAddress(paymentInfo.getDeliveryAddress())
+                .build();
+
+    }
+
+    @Override
+    @Transactional
+    public void deleteCoursePaperPaymentInfo(final Integer paymentInfoNumber) {
+
+        final PaymentInfo paymentInfo = paymentInfoRepository.findByPaymentNumber(paymentInfoNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Payment info with number " + paymentInfoNumber + " can't be found"));
+
+        final CoursePaper coursePaper = paymentInfo.getCoursePaper();
+
+        final Student student = paymentInfo.getStudent();
+
+        student.getCoursePapers().remove(coursePaper);
+
+        studentRepository.save(student);
+
+        paymentInfoRepository.deleteByPaymentNumber(paymentInfoNumber);
+    }
+
+    @Override
+    public void deleteCoursePaymentInfo(final Integer paymentInfoNumber) {
+
+        final PaymentInfo paymentInfo = paymentInfoRepository.findByPaymentNumber(paymentInfoNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Payment info with number " + paymentInfoNumber + " can't be found"));
+
+        final Course course = paymentInfo.getCourse();
+
+        final Student student = paymentInfo.getStudent();
+
+        final CourseSlot assignedCourseSlot = course.getCourseSlots()
+                .stream()
+                .filter(c -> new ArrayList<>(student.getCourseSlots()).contains(c))
+                        .findAny().get();
+
+        student.getCourseSlots().remove(assignedCourseSlot);
+
+        studentRepository.save(student);
+
+        paymentInfoRepository.deleteByPaymentNumber(paymentInfoNumber);
+    }
+
+    @Override
+    public void deleteFCMToken(final String mobileNumber) {
+
+        final Student student = findByMobileNumber(mobileNumber);
+
+        student.setFcmToken(null);
+
+        studentRepository.save(student);
+    }
+
+    @Override
+    public Page<CoursePaymentInfoResponseModel> filterByDeliveryAddress() {
+
+        Page<PaymentInfo> paymentInfos = paymentInfoRepository.findAllByDeliveryAddressIsNotNullAndDeliveryAddressNotEquals();
+
+        return paymentInfos.map(paymentInfo ->
+                CoursePaymentInfoResponseModel.builder()
+                        .studentName(paymentInfo.getStudent().getStudentName())
+                        .coursePaperName(paymentInfo.getCoursePaper().getCoursePaperName())
+                        .paymentNumber(paymentInfo.getPaymentNumber())
+                        .deliveryAddress(paymentInfo.getDeliveryAddress())
+                        .build()
+        );
+    }
 
     private StudentCourseResponseModel buildStudentCourseResponseModel(final Course course) {
 
@@ -226,7 +391,6 @@ public class StudentServiceImpl implements StudentService {
                 .subjectName(course.getSubjectName())
                 .pricePerMonth(course.getPricePerMonth())
                 .pricePerSemester(course.getPricePerSemester())
-//                .maxNumberOfBookings(course.getMaxNumberOfBookings())
                 .build();
     }
 
@@ -250,7 +414,14 @@ public class StudentServiceImpl implements StudentService {
                 .mobileNumber(studentCreationRequestModel.getMobileNumber())
                 .academicYear(studentCreationRequestModel.getAcademicYear())
                 .facultyName(studentCreationRequestModel.getFacultyName())
-                .status(Status.ACTIVE)
+                .status(Status.INACTIVE)
+                .password(encoder.encode(studentCreationRequestModel.getPassword()))
                 .build();
+    }
+
+    private Student findByMobileNumber(final String mobileNumber) {
+
+      return studentRepository.findByMobileNumber(mobileNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Student with mobile number " + mobileNumber + "can't be found"));
     }
 }

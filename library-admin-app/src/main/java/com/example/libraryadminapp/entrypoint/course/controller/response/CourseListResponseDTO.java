@@ -21,4 +21,5 @@ public class CourseListResponseDTO {
     private String facultyName;
     private List<CourseSlotResponseDTO> courseSlots;
     private List<CoursePaperResponseDTO> coursePapers;
+    private String courseStatus;
 }

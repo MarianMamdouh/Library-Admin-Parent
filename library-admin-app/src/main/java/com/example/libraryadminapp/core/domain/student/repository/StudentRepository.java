@@ -11,10 +11,15 @@ public interface StudentRepository {
 
     Optional<Student> findByStudentName(String studentName);
 
+    Optional<Student> findByMobileNumber(String mobileNumber);
+
     List<Student> findAllByAcademicYearAndFacultyName(String academicYear, String facultyName);
 
-//
-//    Page<Course> findAll();
-//
-//    void deleteByCourseName(String courseName);
+    Boolean existsByMobileNumber(String mobileNumber);
+
+    Boolean existsByMobileNumberAndOTP(String mobileNumber, String otp);
+
+    void deleteAll();
+
+
 }

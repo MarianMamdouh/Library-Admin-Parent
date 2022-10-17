@@ -8,23 +8,26 @@ export class LibraryAdminUrlsConfig {
   }
 
     public static get COURSES_URL(): string {
-        return this.ENVIROMENT + "courses";
+        return this.PRODUCTION + "courses";
     }
 
     public static get COURSE_PAPERS_URL(): string {
-        return this.ENVIROMENT + "coursePapers";
+        return this.PRODUCTION + "coursePapers";
     }
 
-
   public static get ACADEMIC_YEAR_URL(): string {
-    return this.ENVIROMENT + "academicYear";
+    return this.PRODUCTION + "academicYear";
   }
 
   public static get FACULTY_NAME_URL(): string {
-    return this.ENVIROMENT + "faculty";
+    return this.PRODUCTION + "faculty";
   }
 
   public static get STUDENT_URL(): string {
-    return this.ENVIROMENT + "students";
+    return this.PRODUCTION + "students";
+  }
+
+  public static get LOGIN_URL(): string {
+    return this.PRODUCTION + "user/login";
   }
 }

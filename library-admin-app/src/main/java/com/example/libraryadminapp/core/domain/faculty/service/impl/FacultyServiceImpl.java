@@ -6,6 +6,7 @@ import com.example.libraryadminapp.core.domain.faculty.entity.Faculty;
 import com.example.libraryadminapp.core.domain.faculty.repository.FacultyRepository;
 import com.example.libraryadminapp.core.domain.faculty.service.FacultyService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,7 +19,14 @@ public class FacultyServiceImpl implements FacultyService {
     private final FacultyRepository facultyRepository;
 
     @Override
-    public void createFaculty(String facultyName) {
+    public void createFaculty(final String facultyName) {
+
+        if (facultyRepository.getAllFaculties()
+                .stream()
+                .anyMatch(faculty-> faculty.getName().equals(facultyName))) {
+
+            throw new IllegalArgumentException("Faculty " + facultyName + " already exists!");
+        }
 
         final Faculty faculty = Faculty
                 .builder()
@@ -29,14 +37,9 @@ public class FacultyServiceImpl implements FacultyService {
     }
 
     @Override
-    public List<String> getAllFaculties() {
+    public Page<String> getAllFaculties() {
 
-        return facultyRepository.getAllFaculties()
-                .stream()
-                .map(Faculty::getName)
-                .collect(Collectors.toList());
+        return facultyRepository.getAllFaculties().map(Faculty::getName);
     }
-
-
 }
 

@@ -39,14 +39,12 @@ public class CoursePaperFacadeImpl implements CoursePaperFacade {
     public void deleteCoursePaper(final String coursePaperName) {
 
         coursePaperService.deleteCoursePaper(coursePaperName);
-
     }
 
     @Override
-    public List<CoursePaperListResponseDTO> getAllCoursePapers() {
+    public Page<CoursePaperListResponseDTO> getAllCoursePapers() {
 
         return coursePaperService.getAllCoursePapers()
-                .stream()
                 .map(coursePaperListResponseModel ->
                 CoursePaperListResponseDTO
                         .builder()
@@ -56,15 +54,14 @@ public class CoursePaperFacadeImpl implements CoursePaperFacade {
                         .price(coursePaperListResponseModel.getPrice())
                         .academicYear(coursePaperListResponseModel.getAcademicYear())
                         .facultyName(coursePaperListResponseModel.getFacultyName())
-                        .build())
-                .collect(Collectors.toList());
+                        .build()
+                );
     }
 
     @Override
-    public List<CoursePaperListResponseDTO> searchCoursePapers(final String searchName) {
+    public Page<CoursePaperListResponseDTO> searchCoursePapers(final String searchName) {
 
         return coursePaperService.searchCoursePapers(searchName)
-                .stream()
                 .map(coursePaperListResponseModel ->
                 CoursePaperListResponseDTO
                         .builder()
@@ -72,14 +69,32 @@ public class CoursePaperFacadeImpl implements CoursePaperFacade {
                         .subjectName(coursePaperListResponseModel.getSubjectName())
                         .professorName(coursePaperListResponseModel.getProfessorName())
                         .price(coursePaperListResponseModel.getPrice())
-                        .build())
+                        .build()
+                );
+    }
+
+    @Override
+    public List<CoursePaperListResponseDTO> searchCoursePapersByMobileNumber(final String searchName, final String mobileNumber) {
+
+        return coursePaperService.searchCoursePapersByMobileNumber(searchName, mobileNumber)
+                .stream()
+                .map(coursePaperListResponseModel ->
+                        CoursePaperListResponseDTO
+                                .builder()
+                                .coursePaperName(coursePaperListResponseModel.getCoursePaperName())
+                                .subjectName(coursePaperListResponseModel.getSubjectName())
+                                .professorName(coursePaperListResponseModel.getProfessorName())
+                                .price(coursePaperListResponseModel.getPrice())
+                                .build()
+                )
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<CoursePaperListResponseDTO> getAllAvailableCoursePapersForStudent(String studentName) {
+    public List<CoursePaperListResponseDTO> getAllAvailableCoursePapersForStudent(String mobileNumber) {
 
-        return coursePaperService.getAllAvailableCoursePapersForStudent(studentName).stream()
+        return coursePaperService.getAllAvailableCoursePapersForStudent(mobileNumber)
+                .stream()
                 .map(coursePaperListResponseModel ->
                         CoursePaperListResponseDTO
                                 .builder()
@@ -89,7 +104,8 @@ public class CoursePaperFacadeImpl implements CoursePaperFacade {
                                 .price(coursePaperListResponseModel.getPrice())
                                 .academicYear(coursePaperListResponseModel.getAcademicYear())
                                 .facultyName(coursePaperListResponseModel.getFacultyName())
-                                .build())
+                                .build()
+                )
                 .collect(Collectors.toList());
     }
 

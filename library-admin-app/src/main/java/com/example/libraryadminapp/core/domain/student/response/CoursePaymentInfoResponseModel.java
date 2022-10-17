@@ -11,4 +11,5 @@ public class CoursePaymentInfoResponseModel {
     private Integer paymentNumber;
     private String courseName;
     private String coursePaperName;
+    private String deliveryAddress;
 }

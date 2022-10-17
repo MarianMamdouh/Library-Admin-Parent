@@ -16,11 +16,13 @@ public interface CoursePaperFacade {
 
     void deleteCoursePaper(String coursePaperName);
 
-    List<CoursePaperListResponseDTO> getAllCoursePapers();
+    Page<CoursePaperListResponseDTO> getAllCoursePapers();
 
-    List<CoursePaperListResponseDTO> searchCoursePapers(String searchName);
+    Page<CoursePaperListResponseDTO> searchCoursePapers(String searchName);
 
-    List<CoursePaperListResponseDTO> getAllAvailableCoursePapersForStudent(String studentName);
+    List<CoursePaperListResponseDTO> searchCoursePapersByMobileNumber(String searchName, String mobileNumber);
+
+    List<CoursePaperListResponseDTO> getAllAvailableCoursePapersForStudent(String mobileNumber);
 
 
 }

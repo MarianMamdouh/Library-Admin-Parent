@@ -24,6 +24,9 @@ public class PaymentInfo {
     @Column(nullable = false)
     private Integer paymentNumber;
 
+    @Column
+    private String deliveryAddress;
+
     @OneToOne
     @JoinColumn(name = "student_id")
     private Student student;

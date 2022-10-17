@@ -21,7 +21,6 @@ import java.util.List;
 public class CourseController {
 
     static final String ROOT_PATH = "/courses";
-
     private final CourseFacade courseFacade;
 
     @PostMapping
@@ -101,15 +100,24 @@ public class CourseController {
 
     @GetMapping("/student")
     @ResponseStatus(HttpStatus.OK)
-    public List<CourseListResponseDTO> getAllAvailableCoursesForStudent(@RequestParam final String studentName) throws Exception {
+    public List<CourseListResponseDTO> getAllAvailableCoursesForStudent(@RequestParam("mobileNumber") final String mobileNumber) throws Exception {
 
-        return courseFacade.getAllAvailableCoursesForStudent(studentName);
+        return courseFacade.getAllAvailableCoursesForStudent(mobileNumber);
+    }
+
+    @GetMapping("/searchByMobileNumber")
+    @ResponseStatus(HttpStatus.OK)
+    public List<CourseListResponseDTO> searchCoursesByMobileNumber(
+            @RequestParam("searchTerm") String searchTerm, @RequestParam("mobileNumber") String mobileNumber) throws Exception {
+
+        return courseFacade.searchCoursesByMobileNumber(searchTerm, mobileNumber);
     }
 
     @GetMapping("/search")
     @ResponseStatus(HttpStatus.OK)
-    public List<CourseListResponseDTO> searchCourses(@RequestParam("searchName") String searchName) throws Exception {
+    public Page<CourseListResponseDTO> searchCourses(@RequestParam("searchName") String searchName) throws Exception {
 
         return courseFacade.searchCourses(searchName);
     }
 }
+

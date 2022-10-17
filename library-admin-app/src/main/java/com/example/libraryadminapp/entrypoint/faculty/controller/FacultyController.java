@@ -3,6 +3,7 @@ package com.example.libraryadminapp.entrypoint.faculty.controller;
 import com.example.libraryadminapp.entrypoint.academicyear.facade.AcademicYearFacade;
 import com.example.libraryadminapp.entrypoint.faculty.facade.FacultyFacade;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +31,7 @@ public class FacultyController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<String> getAllFaculties() throws Exception {
+    public Page<String> getAllFaculties() throws Exception {
 
         return facultyFacade.getAllFaculties();
     }

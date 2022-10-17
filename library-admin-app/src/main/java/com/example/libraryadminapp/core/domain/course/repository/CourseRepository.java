@@ -16,9 +16,9 @@ public interface CourseRepository {
 
     void deleteByCourseName(String courseName);
 
-    List<Course> findAllByCourseNameOrSubjectNameOrProfessorName(String searchName);
+    Page<Course> findAllByCourseNameOrSubjectNameOrProfessorName(String searchName);
+
+    List<Course> findAllByAcademicYearAndFacultyNameAndCourseNameOrSubjectNameOrProfessorName(String academicYear, String facultyName, String searchTerm);
 
     List<Course> findAllByAcademicYearAndFacultyName(String academicYear, String facultyName);
-
-
 }

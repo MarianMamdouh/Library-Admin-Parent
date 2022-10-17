@@ -8,7 +8,6 @@ CREATE TABLE `student` (
                           `academic_year`     varchar(255)   not null,
                           `status`            varchar(255)   not null,
 
-                          UNIQUE KEY `unique_student_name` (`student_name`),
                           UNIQUE KEY `unique_student_mobile` (`mobile_number`),
                           PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
@@ -26,7 +25,6 @@ CREATE TABLE `student_course_papers` (
                          `student_id`            bigint,
                          `course_papers_id`      bigint,
 
-                         UNIQUE KEY `unique_student_course_papers` (`student_id`, `course_papers_id`),
                          foreign key (student_id) references student(id),
                          foreign key (course_papers_id) references course_paper(id)
 ) ENGINE=InnoDB;

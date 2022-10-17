@@ -3,6 +3,8 @@ package com.example.libraryadminapp.core.domain.paymentinfo.repository;
 import com.example.libraryadminapp.core.domain.paymentinfo.entity.PaymentInfo;
 import org.springframework.data.domain.Page;
 
+import java.util.Optional;
+
 public interface PaymentInfoRepository {
 
     PaymentInfo save(PaymentInfo course);
@@ -11,6 +13,9 @@ public interface PaymentInfoRepository {
 
     Page<PaymentInfo> findAllByCoursePaperIsNotNull();
 
-    Page<PaymentInfo> findByPaymentNumber(Integer paymentNumber);
+    Page<PaymentInfo> findAllByDeliveryAddressIsNotNullAndDeliveryAddressNotEquals();
 
+    Optional<PaymentInfo> findByPaymentNumber(Integer paymentNumber);
+
+    void deleteByPaymentNumber(Integer paymentNumber);
 }

@@ -13,4 +13,5 @@ public class CoursePaymentInfoResponseDTO {
     private Integer paymentNumber;
     private String courseName;
     private String coursePaperName;
+    private String deliveryAddress;
 }

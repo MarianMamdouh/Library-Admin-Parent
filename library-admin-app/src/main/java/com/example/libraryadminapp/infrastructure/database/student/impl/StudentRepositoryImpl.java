@@ -28,9 +28,15 @@ public class StudentRepositoryImpl implements StudentRepository {
     }
 
     @Override
-    public Optional<Student> findByStudentName(String studentName) {
+    public Optional<Student> findByStudentName(final String studentName) {
 
         return studentJpaRepository.findByStudentName(studentName);
+    }
+
+    @Override
+    public Optional<Student> findByMobileNumber(final String mobileNumber) {
+
+        return studentJpaRepository.findByMobileNumber(mobileNumber);
     }
 
 
@@ -39,18 +45,24 @@ public class StudentRepositoryImpl implements StudentRepository {
 
         return studentJpaRepository.findAllByAcademicYearAndFacultyName(academicYear, facultyName);
     }
-//
-//    @Override
-//    @Transactional
-//    public Page<Course> findAll() {
-//
-//        return courseJpaRepository.findAll(Pageable.unpaged());
-//    }
-//
-//    @Override
-//    @Transactional
-//    public void deleteByCourseName(String courseName) {
-//
-//        courseJpaRepository.deleteByCourseName(courseName);
-//    }
+
+    @Override
+    @Transactional
+    public Boolean existsByMobileNumber(final String mobileNumber) {
+
+        return studentJpaRepository.existsByMobileNumber(mobileNumber);
+    }
+
+    @Override
+    public Boolean existsByMobileNumberAndOTP(String mobileNumber, String otp) {
+
+        return studentJpaRepository.existsByMobileNumberAndOtp(mobileNumber, otp);
+    }
+
+    @Override
+    public void deleteAll() {
+
+        studentJpaRepository.deleteAll();
+    }
+
 }

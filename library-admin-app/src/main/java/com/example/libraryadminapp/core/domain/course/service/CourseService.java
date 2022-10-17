@@ -26,7 +26,10 @@ public interface CourseService {
 
     Page<CourseListResponseModel> getAllCourses();
 
-    List<CourseListResponseModel> getAllAvailableCoursesForStudent(String studentName);
+    List<CourseListResponseModel> getAllAvailableCoursesForStudent(String mobileNumber);
 
-    List<CourseListResponseModel> searchCourses(String searchName);
+    List<CourseListResponseModel> searchCoursesByMobileNumber(String searchTerm, String mobileStudent);
+
+    Page<CourseListResponseModel> searchCourses(String searchTerm);
+
 }

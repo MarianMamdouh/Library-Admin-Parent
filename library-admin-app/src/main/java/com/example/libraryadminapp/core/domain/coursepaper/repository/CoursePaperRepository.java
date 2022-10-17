@@ -21,9 +21,11 @@ public interface CoursePaperRepository {
 
     Page<CoursePaper> findAll();
 
-    List<CoursePaper> findAllByCoursePaperNameOrSubjectNameProfessorName(String searchName);
+    Page<CoursePaper> findAllByCoursePaperNameOrSubjectNameProfessorName(String searchName);
 
     List<CoursePaper> findAllByAcademicYearAndFacultyName(String academicYear, String facultyName);
+    List<CoursePaper> findAllByAcademicYearAndFacultyNameAndCoursePaperNameOrSubjectNameProfessorName(String academicYear, String facultyName, String searchTerm);
+
 
 
 }

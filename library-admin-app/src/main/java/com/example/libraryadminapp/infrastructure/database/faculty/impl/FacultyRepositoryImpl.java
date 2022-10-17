@@ -7,6 +7,8 @@ import com.example.libraryadminapp.infrastructure.database.academicyear.Academic
 import com.example.libraryadminapp.infrastructure.database.faculty.FacultyJpaRepository;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,8 +34,8 @@ public class FacultyRepositoryImpl implements FacultyRepository {
     }
 
     @Override
-    public List<Faculty> getAllFaculties() {
+    public Page<Faculty> getAllFaculties() {
 
-        return facultyJpaRepository.findAll();
+        return facultyJpaRepository.findAll(Pageable.unpaged());
     }
 }

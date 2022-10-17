@@ -16,7 +16,14 @@ public class AcademicYearServiceImpl implements AcademicYearService {
     private final AcademicYearRepository academicYearRepository;
 
     @Override
-    public void createAcademicYear(String year) {
+    public void createAcademicYear(final String year) {
+
+       if (academicYearRepository.getAllYears()
+               .stream()
+               .anyMatch(academicYear1 -> academicYear1.getYear().equals(year))) {
+
+           throw new IllegalArgumentException("Year " + year + " already exists!");
+       }
 
         final AcademicYear academicYear = AcademicYear
                 .builder()
@@ -34,7 +41,5 @@ public class AcademicYearServiceImpl implements AcademicYearService {
                 .map(AcademicYear::getYear)
                 .collect(Collectors.toList());
     }
-
-
 }
 

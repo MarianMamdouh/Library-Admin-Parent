@@ -9,6 +9,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import javax.transaction.Transactional;
+import java.util.Optional;
+
 @Repository
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class PaymentInfoRepositoryImpl implements PaymentInfoRepository {
@@ -35,8 +38,21 @@ public class PaymentInfoRepositoryImpl implements PaymentInfoRepository {
     }
 
     @Override
-    public Page<PaymentInfo> findByPaymentNumber(final Integer paymentNumber) {
+    public Page<PaymentInfo> findAllByDeliveryAddressIsNotNullAndDeliveryAddressNotEquals() {
 
-        return paymentInfoJpaRepository.findAllByPaymentNumber(paymentNumber, Pageable.unpaged());
+        return paymentInfoJpaRepository.findAllByDeliveryAddressIsNotNullAndDeliveryAddressNot("", Pageable.unpaged());
+    }
+
+    @Override
+    public Optional<PaymentInfo> findByPaymentNumber(final Integer paymentNumber) {
+
+        return paymentInfoJpaRepository.findByPaymentNumber(paymentNumber);
+    }
+
+    @Override
+    @Transactional
+    public void deleteByPaymentNumber(final Integer paymentNumber) {
+
+         paymentInfoJpaRepository.deleteByPaymentNumber(paymentNumber);
     }
 }

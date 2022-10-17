@@ -14,5 +14,7 @@ public class CourseSlotResponseModel {
     private final LocalTime startTime;
     private final LocalTime endTime;
     private final Integer maxNumberOfBookings;
+    private final Integer currentNumberOfBookings;
+
 
 }

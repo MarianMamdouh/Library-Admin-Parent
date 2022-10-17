@@ -11,6 +11,7 @@ import com.example.libraryadminapp.core.domain.course.response.CourseListRespons
 import com.example.libraryadminapp.core.domain.course.response.CoursePaperResponseModel;
 import com.example.libraryadminapp.core.domain.course.response.CourseSlotResponseModel;
 import com.example.libraryadminapp.core.domain.course.service.CourseService;
+import com.example.libraryadminapp.core.domain.course.utils.CourseStatus;
 import com.example.libraryadminapp.core.domain.course.utils.WeekDay;
 import com.example.libraryadminapp.core.domain.coursepaper.entity.CoursePaper;
 import com.example.libraryadminapp.core.domain.coursepaper.repository.CoursePaperRepository;
@@ -20,6 +21,8 @@ import com.example.libraryadminapp.core.domain.faculty.entity.Faculty;
 import com.example.libraryadminapp.core.domain.faculty.repository.FacultyRepository;
 import com.example.libraryadminapp.core.domain.student.entity.Student;
 import com.example.libraryadminapp.core.domain.student.repository.StudentRepository;
+import com.example.libraryadminapp.core.firebase.service.impl.FirebaseMessagingServiceImpl;
+import com.google.firebase.messaging.FirebaseMessagingException;
 import lombok.AllArgsConstructor;
 import org.assertj.core.util.Lists;
 import org.springframework.data.domain.Page;
@@ -29,6 +32,7 @@ import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -42,113 +46,97 @@ public class CourseServiceImpl implements CourseService {
     private final AcademicYearRepository academicYearRepository;
     private final FacultyRepository facultyRepository;
     private final StudentRepository studentRepository;
+    private final FirebaseMessagingServiceImpl firebaseMessagingService;
 
     public void createCourse(final CourseRequestModel courseRequestModel) {
 
-        final Optional<AcademicYear> academicYear = academicYearRepository.findByYear(courseRequestModel.getAcademicYear());
-        final Optional<Faculty> faculty = facultyRepository.findByFacultyName(courseRequestModel.getFacultyName());
+        final AcademicYear academicYear = findByYear(courseRequestModel.getAcademicYear());
 
-        final Course course = buildCourseEntity(courseRequestModel, academicYear.get(), faculty.get());
+        final Faculty faculty = findByFacultyName(courseRequestModel.getFacultyName());
+
+        final Course course = buildCourseEntity(courseRequestModel, academicYear, faculty);
 
         courseRepository.save(course);
+
+        final List<Student> students = studentRepository.findAllByAcademicYearAndFacultyName(academicYear.getYear(), faculty.getName());
 
         final List<CourseSlot> courseSlots = buildCourseSlotEntities(courseRequestModel.getCourseSlots(), course);
 
         courseSlotRepository.saveAll(courseSlots);
 
-        createOrUpdateCoursePaper(courseRequestModel.getCoursePapers(), course, academicYear.get(), faculty.get());
-    }
+        createOrUpdateCoursePaper(courseRequestModel.getCoursePapers(), course, academicYear, faculty);
 
+        students.forEach(student -> {
+            try {
+
+                firebaseMessagingService.sendNotification(student.getFcmToken(), "New Course Added", "Course " + course.getCourseName() + " has been added in our library!");
+            } catch (FirebaseMessagingException e) {
+
+//                throw new RuntimeException(e);
+            }
+
+        });
+    }
     public void updateCourse(final CourseRequestModel courseRequestModel) {
 
-        final Optional<Course> courseOptional = courseRepository.findByCourseName(courseRequestModel.getCourseName());
+        final Course course = findByCourseName(courseRequestModel.getCourseName());
 
-        courseOptional.ifPresent(course -> {
-
-            //  clearCourseSlots(courseRequestModel, course);
-            updateCourse(courseRequestModel, course);
-//            updateCoursePapers(courseRequestModel, course);
-//            updateCourseSlots(courseRequestModel, course);
-        });
+        updateCourse(courseRequestModel, course);
     }
 
     @Override
     public void addCoursePaperToCourse(final String courseName, final CoursePaperRequestModel coursePaperRequestModel) {
 
-        final Optional<Course> courseOptional = courseRepository.findByCourseName(courseName);
+        final Course course = findByCourseName(courseName);
 
-        courseOptional.ifPresent(course -> {
-
-            //  clearCourseSlots(courseRequestModel, course);
-//            updateCourse(courseRequestModel, course);
-            updateCoursePapers(coursePaperRequestModel, course);
-//            updateCourseSlots(courseRequestModel, course);
-        });
-
+        updateCoursePapers(coursePaperRequestModel, course);
     }
 
     @Override
     public void deleteCoursePaperFromCourse(final String courseName, final String coursePaperName) {
 
-        final CoursePaper coursePaperOptional = coursePaperRepository.findByName(coursePaperName).get();
+        final CoursePaper coursePaper = coursePaperRepository.findByName(coursePaperName)
+                .orElseThrow(() -> new IllegalArgumentException("Course Paper " + coursePaperName + " can't be found"));
 
-        coursePaperOptional.setCourse(null);
+        coursePaper.setCourse(null);
 
-        coursePaperRepository.save(coursePaperOptional);
-//        coursePaperRepository.deleteByCoursePaperName(coursePaperName);
+        coursePaperRepository.save(coursePaper);
     }
 
     @Override
-    public void deleteCourseSlotFromCourse(String courseName, Long courseSlotId) {
+    public void deleteCourseSlotFromCourse(final String courseName, final Long courseSlotId) {
 
         courseSlotRepository.deleteById(courseSlotId);
-
-
     }
 
     @Override
-    public void addCourseSlotToCourse(String courseName, CourseSlotRequestModel courseSlotRequestModel) {
+    public void addCourseSlotToCourse(final String courseName, final CourseSlotRequestModel courseSlotRequestModel) {
 
-
-        final Optional<Course> courseOptional = courseRepository.findByCourseName(courseName);
-
-        courseOptional.ifPresent(course -> {
-
-            //  clearCourseSlots(courseRequestModel, course);
-//            updateCourse(courseRequestModel, course);
-//            updateCoursePapers(coursePaperRequestModel, course);
-            updateCourseSlots(courseSlotRequestModel, course);
-        });
-
+        final Course course = findByCourseName(courseName);
+        updateCourseSlots(courseSlotRequestModel, course);
     }
 
     @Override
     @Transactional
-    public void deleteCourse(String courseName) {
+    public void deleteCourse(final String courseName) {
 
-        final Optional<Course> courseOptional = courseRepository.findByCourseName(courseName);
+        final Course course = findByCourseName(courseName);
 
-        courseOptional.ifPresentOrElse(course -> {
+        final List<CoursePaper> coursePapers = coursePaperRepository.findAllByCourseId(course.getId());
 
-            final List<CoursePaper> coursePapers = coursePaperRepository.findAllByCourseId(course.getId());
+        coursePapers.forEach(
 
-            coursePapers.forEach(
+                coursePaper -> coursePaperRepository.deleteByCoursePaperName(coursePaper.getCoursePaperName())
+        );
 
-                    coursePaper -> coursePaperRepository.deleteByCoursePaperName(coursePaper.getCoursePaperName())
-            );
+        final List<CourseSlot> courseSlots = courseSlotRepository.findAllByCourseId(course.getId());
 
-            final List<CourseSlot> courseSlots = courseSlotRepository.findAllByCourseId(course.getId());
+        courseSlots.forEach(
 
-            courseSlots.forEach(
+                courseSlot -> courseSlotRepository.deleteById(courseSlot.getId())
+        );
 
-                    courseSlot -> courseSlotRepository.deleteById(courseSlot.getId())
-            );
-
-            courseRepository.deleteByCourseName(courseName);
-
-
-        }, () -> {
-        });
+        courseRepository.deleteByCourseName(courseName);
     }
 
     private Course updateCourse(final CourseRequestModel courseRequestModel, final Course course) {
@@ -158,73 +146,39 @@ public class CourseServiceImpl implements CourseService {
         course.setPricePerMonth(courseRequestModel.getPricePerMonth());
         course.setPricePerSemester(courseRequestModel.getPricePerSemester());
         course.setCourseSlots(Lists.emptyList());
-        final Optional<AcademicYear> academicYear = academicYearRepository.findByYear(courseRequestModel.getAcademicYear());
-        final Optional<Faculty> faculty = facultyRepository.findByFacultyName(courseRequestModel.getFacultyName());
 
-        course.setAcademicYear(academicYear.get());
-        course.setFaculty(faculty.get());
+        final AcademicYear academicYear = findByYear(courseRequestModel.getAcademicYear());
+        final Faculty faculty = findByFacultyName(courseRequestModel.getFacultyName());
+
+        course.setAcademicYear(academicYear);
+        course.setFaculty(faculty);
+
         return courseRepository.save(course);
     }
-
-//    private void clearCourseSlots(final CourseRequestModel courseRequestModel, final Course course) {
-//
-//        course.getCourseSlots().forEach(courseSlot -> {
-//
-//            final Optional<CoursePaper> coursePaperOptional = courseSlotRepository.(coursePaper.getCoursePaperName());
-//
-//            coursePaperOptional.ifPresentOrElse(existingCoursePaper -> {
-//
-//                existingCoursePaper.setProfessorName(courseRequestModel.getProfessorName());
-//                existingCoursePaper.setSubjectName(courseRequestModel.getSubjectName());
-//                existingCoursePaper.setPrice(coursePaper.getPrice());
-//                existingCoursePaper.setCourse(course);
-//
-//                coursePaperRepository.save(existingCoursePaper);
-//            }, () -> {
-//
-//                final CoursePaper coursePaper1 = CoursePaper.builder()
-//                        .professorName(courseRequestModel.getProfessorName())
-//                        .subjectName(courseRequestModel.getSubjectName())
-//                        .coursePaperName(coursePaper.getCoursePaperName())
-//                        .price(coursePaper.getPrice())
-//                        .course(course)
-//                        .build();
-//
-//                coursePaperRepository.save(coursePaper1);
-//
-//            });
-//        });
-//    }
 
     private void updateCoursePapers(final CoursePaperRequestModel coursePaperRequestModel, final Course course) {
 
         final Optional<CoursePaper> coursePaperOptional = coursePaperRepository.findByName(coursePaperRequestModel.getCoursePaperName());
 
         coursePaperOptional.ifPresentOrElse(existingCoursePaper -> {
-            // todo throw an error that you can't a course paper name that already exists
 
-            existingCoursePaper.setProfessorName(coursePaperRequestModel.getProfessorName());
-            existingCoursePaper.setSubjectName(coursePaperRequestModel.getSubjectName());
-            existingCoursePaper.setPrice(coursePaperRequestModel.getPrice());
-            existingCoursePaper.setCourse(course);
-
-            coursePaperRepository.save(existingCoursePaper);
+           throw new IllegalArgumentException("Course Paper " + coursePaperRequestModel.getCoursePaperName() + " already assigned to course " + course.getCourseName());
         }, () -> {
 
-            final Optional<AcademicYear> academicYear = academicYearRepository.findByYear(coursePaperRequestModel.getAcademicYear());
-            final Optional<Faculty> faculty = facultyRepository.findByFacultyName(coursePaperRequestModel.getFacultyName());
+            final AcademicYear academicYear = findByYear(coursePaperRequestModel.getAcademicYear());
+            final Faculty faculty = findByFacultyName(coursePaperRequestModel.getFacultyName());
 
-            final CoursePaper coursePaper1 = CoursePaper.builder()
+            final CoursePaper coursePaper = CoursePaper.builder()
                     .professorName(coursePaperRequestModel.getProfessorName())
                     .subjectName(coursePaperRequestModel.getSubjectName())
                     .coursePaperName(coursePaperRequestModel.getCoursePaperName())
                     .price(coursePaperRequestModel.getPrice())
-                    .faculty(faculty.get())
-                    .academicYear(academicYear.get())
+                    .faculty(faculty)
+                    .academicYear(academicYear)
                     .course(course)
                     .build();
 
-            coursePaperRepository.save(coursePaper1);
+            coursePaperRepository.save(coursePaper);
 
         });
     }
@@ -265,35 +219,15 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public List<CourseListResponseModel> getAllAvailableCoursesForStudent(final String studentName) {
+    public List<CourseListResponseModel> getAllAvailableCoursesForStudent(final String mobileNumber) {
 
-        final Optional<Student> student = studentRepository.findByStudentName(studentName);
+        final Student student = studentRepository.findByMobileNumber(mobileNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Student with mobile number " + mobileNumber + " can't be found"));
 
-        final String academicYear = student.get().getAcademicYear();
-        final String facultyName = student.get().getFacultyName();
+        final String academicYear = student.getAcademicYear();
+        final String facultyName = student.getFacultyName();
 
         List<Course> courses = courseRepository.findAllByAcademicYearAndFacultyName(academicYear, facultyName);
-
-        return courses.stream().map(course ->
-                        CourseListResponseModel
-                                .builder()
-                                .courseName(course.getCourseName())
-                                .professorName(course.getProfessorName())
-                                .subjectName(course.getSubjectName())
-                                .pricePerSemester(course.getPricePerSemester())
-                                .pricePerMonth(course.getPricePerMonth())
-                                .academicYear(course.getAcademicYear().getYear())
-                                .facultyName(course.getFaculty().getName())
-                                .courseSlots(getCourseSLotsForCourse(course))
-                                .coursePapers(getCoursePapersForCourse(course))
-                                .build())
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CourseListResponseModel> searchCourses(String searchName) {
-
-        List<Course> courses = courseRepository.findAllByCourseNameOrSubjectNameOrProfessorName(searchName);
 
         return courses.stream()
                 .map(course ->
@@ -304,12 +238,86 @@ public class CourseServiceImpl implements CourseService {
                                 .subjectName(course.getSubjectName())
                                 .pricePerSemester(course.getPricePerSemester())
                                 .pricePerMonth(course.getPricePerMonth())
+                                .academicYear(course.getAcademicYear().getYear())
+                                .facultyName(course.getFaculty().getName())
+                                .courseSlots(getCourseSLotsForCourse(course))
+                                .coursePapers(getCoursePapersForCourse(course))
+                                .courseStatus(getCourseStatus(course, mobileNumber))
+                                .build()
+                )
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CourseListResponseModel> searchCoursesByMobileNumber(final String searchName, final String mobileNumber) {
+
+        final Student student = studentRepository.findByMobileNumber(mobileNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Student with mobile number " + mobileNumber + " can't be found"));
+
+        final String academicYear = student.getAcademicYear();
+        final String facultyName = student.getFacultyName();
+
+        List<Course> courses = courseRepository.findAllByAcademicYearAndFacultyNameAndCourseNameOrSubjectNameOrProfessorName(academicYear, facultyName, searchName);
+
+        return courses.stream().map(course ->
+                CourseListResponseModel
+                        .builder()
+                        .courseName(course.getCourseName())
+                        .professorName(course.getProfessorName())
+                        .subjectName(course.getSubjectName())
+                        .pricePerSemester(course.getPricePerSemester())
+                        .pricePerMonth(course.getPricePerMonth())
+                        .facultyName(course.getFaculty().getName())
+                        .academicYear(course.getAcademicYear().getYear())
+                        .courseSlots(getCourseSLotsForCourse(course))
+                        .coursePapers(getCoursePapersForCourse(course))
+                        .courseStatus(getCourseStatus(course, mobileNumber))
+                        .build()
+        )
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<CourseListResponseModel> searchCourses(final String searchTerm) {
+
+        Page<Course> courses = courseRepository.findAllByCourseNameOrSubjectNameOrProfessorName(searchTerm);
+
+        return courses.map(course ->
+                        CourseListResponseModel
+                                .builder()
+                                .courseName(course.getCourseName())
+                                .professorName(course.getProfessorName())
+                                .subjectName(course.getSubjectName())
+                                .pricePerSemester(course.getPricePerSemester())
+                                .pricePerMonth(course.getPricePerMonth())
                                 .facultyName(course.getFaculty().getName())
                                 .academicYear(course.getAcademicYear().getYear())
                                 .courseSlots(getCourseSLotsForCourse(course))
                                 .coursePapers(getCoursePapersForCourse(course))
-                                .build())
-                .collect(Collectors.toList());
+                                .build()
+                );
+    }
+
+    private String getCourseStatus(final Course course, final String mobileNumber) {
+
+        final Student student = studentRepository.findByMobileNumber(mobileNumber).get();
+
+        final List<CourseSlot> courseSlots = student.getCourseSlots();
+
+        if (course.getCourseSlots().stream()
+                .anyMatch(courseSlots::contains)) {
+
+            return CourseStatus.ALREADY_BOOKED.toString();
+        }
+
+      if (course.getCourseSlots()
+              .stream()
+              .allMatch(courseSlot -> Objects.equals(courseSlot.getCurrentNumberOfBookings(), courseSlot.getMaximumNumberOfBookings()))) {
+
+          return CourseStatus.FULLY_BOOKED.toString();
+      }
+
+      return CourseStatus.AVAILABLE_TO_BOOK.toString();
     }
 
     private List<CoursePaperResponseModel> getCoursePapersForCourse(final Course course) {
@@ -353,6 +361,7 @@ public class CourseServiceImpl implements CourseService {
                 .startTime(courseSlot.getStartTime().toLocalTime())
                 .endTime(courseSlot.getEndTime().toLocalTime())
                 .maxNumberOfBookings(courseSlot.getMaximumNumberOfBookings())
+                .currentNumberOfBookings(courseSlot.getCurrentNumberOfBookings())
                 .build();
     }
 
@@ -378,26 +387,17 @@ public class CourseServiceImpl implements CourseService {
         coursePaperRequestModels.forEach(
                 coursePaperRequestModel -> {
 
-                    Optional<CoursePaper> coursePaper = coursePaperRepository.findByName(coursePaperRequestModel.getCoursePaperName());
-                    coursePaper.ifPresentOrElse(coursePaper1 -> {
+                    coursePaperRepository.findByName(coursePaperRequestModel.getCoursePaperName())
+                            .ifPresentOrElse(coursePaper1 -> {
 
-                        coursePaper1.setCourse(course);
-                        coursePaperRepository.save(coursePaper1);
+                                coursePaper1.setCourse(course);
+                                coursePaperRepository.save(coursePaper1);
+                                }, () -> {
 
-                    }, () -> {
-                        CoursePaper coursePaper2 = buildCoursePaperEntity(course, coursePaperRequestModel, academicYear, faculty);
-                        coursePaperRepository.save(coursePaper2);
-
-                    });
-
-
+                                CoursePaper coursePaper2 = buildCoursePaperEntity(course, coursePaperRequestModel, academicYear, faculty);
+                                coursePaperRepository.save(coursePaper2);
+                            });
                 });
-//
-//
-//        return coursePaperRequestModels
-//                .stream()
-//                .map(coursePaperRequestModel -> buildCoursePaperEntity(course, coursePaperRequestModel, academicYear, faculty))
-//                .collect(Collectors.toList());
     }
 
     private CoursePaper buildCoursePaperEntity(final Course course, final CoursePaperRequestModel coursePaperRequestModel,
@@ -435,5 +435,23 @@ public class CourseServiceImpl implements CourseService {
                 .currentNumberOfBookings(0)
                 .course(course)
                 .build();
+    }
+
+    private AcademicYear findByYear(final String year) {
+
+        return academicYearRepository.findByYear(year)
+                .orElseThrow(() -> new IllegalArgumentException("Year " + year + " can't be found"));
+    }
+
+    private Faculty findByFacultyName(final String facultyName) {
+
+        return facultyRepository.findByFacultyName(facultyName)
+                .orElseThrow(() -> new IllegalArgumentException("Faculty " + facultyName + " can't be found"));
+    }
+
+    private Course findByCourseName(final String courseName) {
+
+        return courseRepository.findByCourseName(courseName)
+                .orElseThrow(() -> new IllegalArgumentException("Course " + courseName + " can't be found"));
     }
 }

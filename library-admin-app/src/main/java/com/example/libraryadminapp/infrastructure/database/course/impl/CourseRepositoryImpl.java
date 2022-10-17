@@ -46,9 +46,15 @@ public class CourseRepositoryImpl implements CourseRepository {
     }
 
     @Override
-    public List<Course> findAllByCourseNameOrSubjectNameOrProfessorName(String searchName) {
+    public Page<Course> findAllByCourseNameOrSubjectNameOrProfessorName(String searchName) {
 
-        return courseJpaRepository.findAllByCourseNameOrSubjectNameOrProfessorName(searchName, searchName, searchName);
+        return courseJpaRepository.findAllByCourseNameOrSubjectNameOrProfessorName(searchName, searchName, searchName, Pageable.unpaged());
+    }
+
+    @Override
+    public List<Course> findAllByAcademicYearAndFacultyNameAndCourseNameOrSubjectNameOrProfessorName(final String academicYear, final String facultyName, final String searchTerm) {
+
+        return courseJpaRepository.findAllByAcademicYear_YearAndFaculty_NameAndCourseNameOrSubjectNameOrProfessorName(academicYear, facultyName, searchTerm, searchTerm, searchTerm);
     }
 
     @Override

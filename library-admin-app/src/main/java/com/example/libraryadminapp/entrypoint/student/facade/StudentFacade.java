@@ -1,6 +1,8 @@
 package com.example.libraryadminapp.entrypoint.student.facade;
 
 import com.example.libraryadminapp.entrypoint.student.controller.request.StudentCreationRequestDTO;
+import com.example.libraryadminapp.entrypoint.student.controller.request.StudentLoginRequestDTO;
+import com.example.libraryadminapp.entrypoint.student.controller.request.StudentLoginResponseDTO;
 import com.example.libraryadminapp.entrypoint.student.controller.response.CoursePaymentInfoResponseDTO;
 import com.example.libraryadminapp.entrypoint.student.controller.response.StudentCoursePaperResponseDTO;
 import com.example.libraryadminapp.entrypoint.student.controller.response.StudentCourseResponseDTO;
@@ -11,22 +13,33 @@ import java.util.List;
 
 public interface StudentFacade {
 
-    void createStudent(StudentCreationRequestDTO studentCreationRequestDTO);
+    void createStudent(StudentCreationRequestDTO studentCreationRequestDTO) throws IOException;
 
-    void verifyStudentMobileNumber(String studentMobileNumber) throws IOException;
+    StudentLoginResponseDTO login(StudentLoginRequestDTO studentLoginDTO);
 
-    Integer assignCourseToStudent(String courseName, String studentName, Long courseSlotId);
+    void verifyStudentOTP(String otp, String mobileNumber) throws IOException;
 
-    Integer assignCoursePaperToStudent(String coursePaperName, String studentName);
+    void setFCMToken(String fcmToken, String mobileNumber) throws IOException;
 
-    List<StudentCourseResponseDTO> getAllCoursesBookings(String studentName);
+    Integer assignCourseToStudent(String courseName, String mobileNumber, Long courseSlotId);
 
-    List<StudentCoursePaperResponseDTO> getAllCoursePapersBookings(String studentName);
+    Integer assignCoursePaperToStudent(String coursePaperName, String mobileNumber, String deliveryAddress);
+
+    List<StudentCourseResponseDTO> getAllCoursesBookings(String mobileNumber);
+
+    List<StudentCoursePaperResponseDTO> getAllCoursePapersBookings(String mobileNumber);
 
     Page<CoursePaymentInfoResponseDTO> getAllCoursesPaymentInfo();
 
     Page<CoursePaymentInfoResponseDTO> getAllCoursePapersPaymentInfo();
 
-    Page<CoursePaymentInfoResponseDTO> searchByPaymentInfoNumber(Integer paymentInfoNumber);
+    CoursePaymentInfoResponseDTO searchByPaymentInfoNumber(Integer paymentInfoNumber);
 
+    void deleteCoursePaperPaymentInfo(Integer paymentInfoNumber);
+
+    void deleteCoursePaymentInfo(Integer paymentInfoNumber);
+
+    void deleteFCMToken(String mobileNumber);
+
+    Page<CoursePaymentInfoResponseDTO> filterByDeliveryAddress();
 }

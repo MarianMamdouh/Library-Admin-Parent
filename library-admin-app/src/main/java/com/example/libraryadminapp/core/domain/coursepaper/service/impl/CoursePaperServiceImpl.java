@@ -14,6 +14,8 @@ import com.example.libraryadminapp.core.domain.faculty.entity.Faculty;
 import com.example.libraryadminapp.core.domain.faculty.repository.FacultyRepository;
 import com.example.libraryadminapp.core.domain.student.entity.Student;
 import com.example.libraryadminapp.core.domain.student.repository.StudentRepository;
+import com.example.libraryadminapp.core.firebase.service.impl.FirebaseMessagingServiceImpl;
+import com.google.firebase.messaging.FirebaseMessagingException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -32,39 +34,46 @@ public class CoursePaperServiceImpl implements CoursePaperService {
     private final FacultyRepository facultyRepository;
     private final StudentRepository studentRepository;
 
+    private final FirebaseMessagingServiceImpl firebaseMessagingService;
+
     public void createCoursePaper(final CoursePaperCreationRequestModel coursePaperCreationRequestModel) {
 
-        final Optional<AcademicYear> academicYear = academicYearRepository.findByYear(coursePaperCreationRequestModel.getAcademicYear());
-        final Optional<Faculty> faculty = facultyRepository.findByFacultyName(coursePaperCreationRequestModel.getFacultyName());
+        final AcademicYear academicYear = findByYear(coursePaperCreationRequestModel.getAcademicYear());
+        final Faculty faculty = findByFacultyName(coursePaperCreationRequestModel.getFacultyName());
 
-        final CoursePaper coursePaper = buildCoursePaperEntity(coursePaperCreationRequestModel, academicYear.get(), faculty.get() );
+        final CoursePaper coursePaper = buildCoursePaperEntity(coursePaperCreationRequestModel, academicYear, faculty);
 
         coursePaperRepository.save(coursePaper);
+
+        final List<Student> students = studentRepository.findAllByAcademicYearAndFacultyName(academicYear.getYear(), faculty.getName());
+
+        students.forEach(student -> {
+            try {
+
+                firebaseMessagingService.sendNotification(student.getFcmToken(), "New Course paper Added", "Course Paper" + coursePaper.getCoursePaperName() + " has been added in our library!");
+            } catch (FirebaseMessagingException e) {
+
+//                throw new RuntimeException(e);
+            }
+        });
+
     }
 
     @Override
     public void updateCoursePaper(final CoursePaperUpdateRequestModel coursePaperUpdateRequestModel) {
 
-        Optional<CoursePaper> coursePaperOptional = coursePaperRepository.findByName(coursePaperUpdateRequestModel.getCoursePaperName());
+        CoursePaper coursePaper = coursePaperRepository.findByName(coursePaperUpdateRequestModel.getCoursePaperName())
+                .orElseThrow(() -> new IllegalArgumentException("Course Paper " + coursePaperUpdateRequestModel.getCoursePaperName() + " can't be found"));
 
-        coursePaperOptional.ifPresent(coursePaper -> {
+        final AcademicYear academicYear = findByYear(coursePaperUpdateRequestModel.getAcademicYear());
+        final Faculty faculty = findByFacultyName(coursePaperUpdateRequestModel.getFacultyName());
 
-//            if (Objects.nonNull(coursePaper.getCourse())) {
-//
-//                System.out.println("error");
-//                return;
-//            }
-
-            final Optional<AcademicYear> academicYear = academicYearRepository.findByYear(coursePaperUpdateRequestModel.getAcademicYear());
-            final Optional<Faculty> faculty = facultyRepository.findByFacultyName(coursePaperUpdateRequestModel.getFacultyName());
-
-            coursePaper.setAcademicYear(academicYear.get());
-            coursePaper.setFaculty(faculty.get());
-            coursePaper.setSubjectName(coursePaperUpdateRequestModel.getSubjectName());
-            coursePaper.setProfessorName(coursePaperUpdateRequestModel.getProfessorName());
-            coursePaper.setPrice(coursePaperUpdateRequestModel.getPrice());
-            coursePaperRepository.save(coursePaper);
-        });
+        coursePaper.setAcademicYear(academicYear);
+        coursePaper.setFaculty(faculty);
+        coursePaper.setSubjectName(coursePaperUpdateRequestModel.getSubjectName());
+        coursePaper.setProfessorName(coursePaperUpdateRequestModel.getProfessorName());
+        coursePaper.setPrice(coursePaperUpdateRequestModel.getPrice());
+        coursePaperRepository.save(coursePaper);
     }
 
     @Override
@@ -87,36 +96,64 @@ public class CoursePaperServiceImpl implements CoursePaperService {
                        .price(coursePaper.getPrice())
                        .academicYear(coursePaper.getAcademicYear().getYear())
                        .facultyName(coursePaper.getFaculty().getName())
-                       .build());
+                       .build()
+       );
     }
 
     @Override
-    public List<CoursePaperListResponseModel> searchCoursePapers(String searchName) {
+    public Page<CoursePaperListResponseModel> searchCoursePapers(final String searchName) {
 
-        List<CoursePaper> coursePapers = coursePaperRepository.findAllByCoursePaperNameOrSubjectNameProfessorName(searchName);
+        Page<CoursePaper> coursePapers = coursePaperRepository.findAllByCoursePaperNameOrSubjectNameProfessorName(searchName);
 
-        return coursePapers.stream().map(coursePaper ->
+        return coursePapers.map(coursePaper ->
                 CoursePaperListResponseModel
                         .builder()
                         .coursePaperName(coursePaper.getCoursePaperName())
                         .subjectName(coursePaper.getSubjectName())
                         .professorName(coursePaper.getProfessorName())
                         .price(coursePaper.getPrice())
-                        .build())
+                        .build()
+        );
+    }
+
+    @Override
+    public List<CoursePaperListResponseModel> searchCoursePapersByMobileNumber(String searchName, String mobileNumber) {
+
+        final Student student = studentRepository.findByMobileNumber(mobileNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Student with mobile number " + mobileNumber + " can't be found"));
+
+        final String academicYear = student.getAcademicYear();
+        final String facultyName = student.getFacultyName();
+
+        List<CoursePaper> coursePapers = coursePaperRepository.findAllByAcademicYearAndFacultyNameAndCoursePaperNameOrSubjectNameProfessorName(academicYear, facultyName, searchName);
+
+        return coursePapers
+                .stream()
+                .map(coursePaper ->
+                CoursePaperListResponseModel
+                        .builder()
+                        .coursePaperName(coursePaper.getCoursePaperName())
+                        .subjectName(coursePaper.getSubjectName())
+                        .professorName(coursePaper.getProfessorName())
+                        .price(coursePaper.getPrice())
+                        .build()
+        )
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<CoursePaperListResponseModel> getAllAvailableCoursePapersForStudent(String studentName) {
+    public List<CoursePaperListResponseModel> getAllAvailableCoursePapersForStudent(String mobileNumber) {
 
-        final Optional<Student> student = studentRepository.findByStudentName(studentName);
+        final Student student = studentRepository.findByMobileNumber(mobileNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Student with mobile number " + mobileNumber + " can't be found"));
 
-        final String academicYear = student.get().getAcademicYear();
-        final String facultyName = student.get().getFacultyName();
+        final String academicYear = student.getAcademicYear();
+        final String facultyName = student.getFacultyName();
 
         List<CoursePaper> coursePapers = coursePaperRepository.findAllByAcademicYearAndFacultyName(academicYear, facultyName);
 
-        return coursePapers.stream().map(coursePaper ->
+        return coursePapers.stream()
+                .map(coursePaper ->
                 CoursePaperListResponseModel
                         .builder()
                         .coursePaperName(coursePaper.getCoursePaperName())
@@ -125,7 +162,8 @@ public class CoursePaperServiceImpl implements CoursePaperService {
                         .price(coursePaper.getPrice())
                         .academicYear(academicYear)
                         .facultyName(facultyName)
-                        .build())
+                        .build()
+        )
                 .collect(Collectors.toList());
     }
 
@@ -141,5 +179,17 @@ public class CoursePaperServiceImpl implements CoursePaperService {
                 .academicYear(academicYear)
                 .faculty(faculty)
                 .build();
+    }
+
+    private AcademicYear findByYear(final String year) {
+
+        return academicYearRepository.findByYear(year)
+                .orElseThrow(() -> new IllegalArgumentException("Year " + year + " can't be found"));
+    }
+
+    private Faculty findByFacultyName(final String facultyName) {
+
+        return facultyRepository.findByFacultyName(facultyName)
+                .orElseThrow(() -> new IllegalArgumentException("Faculty " + facultyName + " can't be found"));
     }
 }

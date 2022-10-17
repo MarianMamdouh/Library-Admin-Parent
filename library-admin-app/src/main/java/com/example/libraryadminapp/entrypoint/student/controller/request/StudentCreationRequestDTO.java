@@ -14,6 +14,9 @@ public class StudentCreationRequestDTO {
     private String mobileNumber;
 
     @NotBlank
+    private String password;
+
+    @NotBlank
     private String academicYear;
 
     @NotBlank

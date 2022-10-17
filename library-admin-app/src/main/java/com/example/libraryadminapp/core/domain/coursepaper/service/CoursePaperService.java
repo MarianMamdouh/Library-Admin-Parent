@@ -10,16 +10,17 @@ import java.util.List;
 
 public interface CoursePaperService {
 
-    void createCoursePaper(final CoursePaperCreationRequestModel coursePaperCreationRequestModel);
+    void createCoursePaper(CoursePaperCreationRequestModel coursePaperCreationRequestModel);
 
-    void updateCoursePaper(final CoursePaperUpdateRequestModel coursePaperUpdateRequestModel);
+    void updateCoursePaper(CoursePaperUpdateRequestModel coursePaperUpdateRequestModel);
 
     void deleteCoursePaper(String coursePaperName);
 
     Page<CoursePaperListResponseModel> getAllCoursePapers();
 
-    List<CoursePaperListResponseModel> searchCoursePapers(String searchName);
+    Page<CoursePaperListResponseModel> searchCoursePapers(String searchName);
+    List<CoursePaperListResponseModel> searchCoursePapersByMobileNumber(String searchName, String mobileNumber);
 
-    List<CoursePaperListResponseModel> getAllAvailableCoursePapersForStudent(String studentName);
+    List<CoursePaperListResponseModel> getAllAvailableCoursePapersForStudent(String mobileNumber);
 
 }

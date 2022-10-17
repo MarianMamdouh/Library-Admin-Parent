@@ -4,6 +4,7 @@ import com.example.libraryadminapp.core.domain.academicyear.service.AcademicYear
 import com.example.libraryadminapp.core.domain.faculty.service.FacultyService;
 import com.example.libraryadminapp.entrypoint.faculty.facade.FacultyFacade;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,14 +18,14 @@ public class FacultyFacadeImpl implements FacultyFacade {
 
 
     @Override
-    public void createFaculty(String facultyName) {
+    public void createFaculty(final String facultyName) {
 
         facultyService.createFaculty(facultyName);
 
     }
 
     @Override
-    public List<String> getAllFaculties() {
+    public Page<String> getAllFaculties() {
 
        return facultyService.getAllFaculties();
     }

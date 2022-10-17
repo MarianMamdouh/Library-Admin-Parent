@@ -16,4 +16,5 @@ public class CourseSlotResponseDTO {
     private LocalTime startTime;
     private LocalTime endTime;
     private Integer maxNumberOfBookings;
+    private Integer currentNumberOfBookings;
 }

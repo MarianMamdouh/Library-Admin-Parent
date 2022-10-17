@@ -26,7 +26,8 @@ public interface CourseFacade {
     void deleteCourse(final String courseName);
     Page<CourseListResponseDTO> getAllCourses();
 
-    List<CourseListResponseDTO> searchCourses(String searchName);
+    List<CourseListResponseDTO> searchCoursesByMobileNumber(String searchTerm, String mobileName);
+    Page<CourseListResponseDTO> searchCourses(String searchName);
 
-    List<CourseListResponseDTO> getAllAvailableCoursesForStudent(String studentName);
+    List<CourseListResponseDTO> getAllAvailableCoursesForStudent(String mobileNumber);
 }

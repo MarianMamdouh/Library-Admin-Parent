@@ -45,15 +45,22 @@ public class CoursePaperRepositoryImpl implements CoursePaperRepository {
     }
 
     @Override
-    public List<CoursePaper> findAllByCoursePaperNameOrSubjectNameProfessorName(final String searchName) {
+    public Page<CoursePaper> findAllByCoursePaperNameOrSubjectNameProfessorName(final String searchName) {
 
-        return coursePaperJpaRepository.findAllByCoursePaperNameOrSubjectNameOrProfessorName(searchName, searchName, searchName);
+        return coursePaperJpaRepository.findAllByCoursePaperNameOrSubjectNameOrProfessorName(searchName, searchName, searchName, Pageable.unpaged());
     }
 
     @Override
-    public List<CoursePaper> findAllByAcademicYearAndFacultyName(String academicYear, String facultyName) {
+    public List<CoursePaper> findAllByAcademicYearAndFacultyName(final String academicYear, final String facultyName) {
 
         return coursePaperJpaRepository.findAllByAcademicYear_YearAndFaculty_Name(academicYear, facultyName);
+    }
+
+    @Override
+    public List<CoursePaper> findAllByAcademicYearAndFacultyNameAndCoursePaperNameOrSubjectNameProfessorName(final String academicYear, final String facultyName, final String searchTerm) {
+
+        return coursePaperJpaRepository.findAllByAcademicYear_YearAndFaculty_NameAndCoursePaperNameOrSubjectNameOrProfessorName(academicYear, facultyName, searchTerm, searchTerm, searchTerm);
+
     }
 
     @Override
