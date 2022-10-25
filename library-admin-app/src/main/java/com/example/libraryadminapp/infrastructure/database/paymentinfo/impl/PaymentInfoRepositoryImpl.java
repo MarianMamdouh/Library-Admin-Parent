@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -47,6 +48,18 @@ public class PaymentInfoRepositoryImpl implements PaymentInfoRepository {
     public Optional<PaymentInfo> findByPaymentNumber(final Integer paymentNumber) {
 
         return paymentInfoJpaRepository.findByPaymentNumber(paymentNumber);
+    }
+
+    @Override
+    public Optional<PaymentInfo> findByCourseNameAndMobileNumber(final String courseName, final String mobileNumber) {
+
+        return paymentInfoJpaRepository.findByCourse_CourseNameAndStudent_MobileNumber(courseName, mobileNumber);
+    }
+
+    @Override
+    public List<PaymentInfo> findAllByCoursePaperNameAndMobileNumber(final String coursePaperName, final String mobileNumber) {
+
+        return paymentInfoJpaRepository.findAllByCoursePaper_CoursePaperNameAndStudent_MobileNumber(coursePaperName, mobileNumber);
     }
 
     @Override

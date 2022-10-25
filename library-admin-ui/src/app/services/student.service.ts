@@ -24,6 +24,22 @@ export class StudentService {
       });
   }
 
+  public getAllAssignedCourses(): Promise<any> {
+    return this.http.get(LibraryAdminUrlsConfig.STUDENT_URL + "/assignedCourses", {headers: this.createHeader()})
+      .toPromise()
+      .catch(err => {
+        return Promise.reject(err.message || err);
+      });
+  }
+
+  public getAllAssignedCoursePapers(): Promise<any> {
+    return this.http.get(LibraryAdminUrlsConfig.STUDENT_URL + "/assignedCoursePapers", {headers: this.createHeader()})
+      .toPromise()
+      .catch(err => {
+        return Promise.reject(err.message || err);
+      });
+  }
+
     public deleteCoursePaperPaymentInfo(paymentNumber): Promise<any> {
       return this.http.delete(LibraryAdminUrlsConfig.STUDENT_URL + "/coursePapers/paymentInfos?paymentInfoNumber=" + paymentNumber, {headers: this.createHeader()})
         .toPromise()
@@ -34,6 +50,23 @@ export class StudentService {
 
   public deleteCoursePaymentInfo(paymentNumber): Promise<any> {
     return this.http.delete(LibraryAdminUrlsConfig.STUDENT_URL + "/courses/paymentInfos?paymentInfoNumber=" + paymentNumber, {headers: this.createHeader()})
+      .toPromise()
+      .catch(err => {
+        return Promise.reject(err.message || err);
+      });
+  }
+
+    public unassignStudentFromCourse(courseName, mobileNumber): Promise<any> {
+    return this.http.delete(LibraryAdminUrlsConfig.STUDENT_URL + "/courses?courseName=" + courseName + "&mobileNumber=" + mobileNumber, {headers: this.createHeader()})
+      .toPromise()
+      .catch(err => {
+        return Promise.reject(err.message || err);
+      });
+  }
+
+
+  public unassignStudentFromCoursePaper(coursePaperName, mobileNumber): Promise<any> {
+    return this.http.delete(LibraryAdminUrlsConfig.STUDENT_URL + "/coursePapers?coursePaperName=" + coursePaperName + "&mobileNumber=" + mobileNumber, {headers: this.createHeader()})
       .toPromise()
       .catch(err => {
         return Promise.reject(err.message || err);

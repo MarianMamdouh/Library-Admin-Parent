@@ -33,6 +33,14 @@ export class AcademicYearService {
       });
   }
 
+  public deleteAcademicYear(year: any): Promise<any> {
+    return this.http.delete(LibraryAdminUrlsConfig.ACADEMIC_YEAR_URL + "?year=" + year,  {headers: this.createHeader()})
+      .toPromise()
+      .catch(err => {
+        return Promise.reject(err.message || err);
+      });
+  }
+
 
    private createHeader(contentType?) {
       let headers = new HttpHeaders().set('Authorization', 'Bearer ' + localStorage.getItem("token"));

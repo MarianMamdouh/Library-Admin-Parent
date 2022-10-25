@@ -9,6 +9,8 @@ import { AcademicYearService } from "../services/academic-year.service";
 import { FacultyService } from "../services/faculty.service";
 import { CourseSlot } from "../models/courseSlot";
 import { PaymentInfo } from "../models/paymentInfo";
+import {Faculty} from "../models/faculty";
+import {AcademicYear} from "../models/academicYear";
 
 @Component({
   selector: "library-admin-dashboard",
@@ -48,21 +50,33 @@ export class LibraryAdminDashboardComponent implements OnInit {
 
   coursePaperNames: string[] = [];
 
+  academicYearNames: number[] = [];
+
+  facultyNamesNames: string[] = [];
+
   selectedCoursePaperNames: string[] = [];
+
+  selectedCourseSlotDays: string[] = [];
 
   coursePaper: CoursePaper;
 
-  academicYears: number[] = [];
+  academicYears: AcademicYear[] = [];
 
-  facultyNames: string[] = [];
+  facultyNames: Faculty[] = [];
 
   coursesPaymentInfos: PaymentInfo[] = [];
 
   coursePapersPaymentInfos: PaymentInfo[] = [];
 
+  studentAssignedCourses: PaymentInfo[] = [];
+
+  studentAssignedCoursePapers: PaymentInfo[] = [];
+
   courseDialog: boolean;
 
   coursePaperDialog: boolean;
+
+  assignCoursePaperDialog: boolean;
 
   editCourseDialog: boolean;
 
@@ -83,6 +97,7 @@ export class LibraryAdminDashboardComponent implements OnInit {
 
   isEditCourseDialogSubmitted: boolean;
   isCoursePaperDialogueSubmitted: boolean;
+  isAssignCoursePaperDialogueSubmitted: boolean;
   isAcademicYearDialogueSubmitted: boolean;
   isFacultyNameDialogueSubmitted: boolean;
   isCourseSlotDialogueSubmitted: boolean;
@@ -106,7 +121,10 @@ export class LibraryAdminDashboardComponent implements OnInit {
     this.getAllFacultyNames();
     this.getAllStudentCoursesPaymentInfo();
     this.getAllStudentCoursePapersPaymentInfo();
+    this.getAllStudentAssignedCourses();
+    this.getAllStudentAssignedCoursePapers();
   }
+
 
   deleteCoursePaperPaymentInfo(coursePapersPaymentInfo) {
     this.confirmationService.confirm({
@@ -131,6 +149,78 @@ export class LibraryAdminDashboardComponent implements OnInit {
           });
       },
     });
+  }
+
+  unassignStudentFromCoursePaper(coursePaperPaymentInfo) {
+
+    this.confirmationService.confirm({
+      message:
+        "Are you sure you want to unassign student with number " + coursePaperPaymentInfo.mobileNumber + " from course paper" + coursePaperPaymentInfo.coursePaperName + "?",
+      header: "Confirm",
+      icon: "pi pi-exclamation-triangle",
+      accept: () => {
+
+        this.studentService
+          .unassignStudentFromCoursePaper(coursePaperPaymentInfo.coursePaperName, coursePaperPaymentInfo.mobileNumber)
+          .then((response) => {
+
+              let payemntInfo = this.studentAssignedCoursePapers.filter(
+                (val) =>
+                  val.mobileNumber == coursePaperPaymentInfo.mobileNumber
+              );
+
+              if (payemntInfo.length > 1) {
+                let payemntInfoIndex = this.studentAssignedCoursePapers.findIndex(
+                  (val) =>
+                    val.mobileNumber == coursePaperPaymentInfo.mobileNumber
+                );
+
+                this.studentAssignedCoursePapers.splice(payemntInfoIndex, 1);
+              }
+              else {
+                this.studentAssignedCoursePapers =
+
+                  this.studentAssignedCoursePapers.filter(
+                    (val) =>
+                      val.mobileNumber !== coursePaperPaymentInfo.mobileNumber
+                  );
+              }
+
+            this.studentAssignedCoursePapers = [...this.studentAssignedCoursePapers];
+          })
+          .catch(() => {
+            this.showError("Unassigning student has failed");
+          });
+      },
+    });
+
+  }
+
+  unassignStudentFromCourse(coursePaymentInfo) {
+
+    this.confirmationService.confirm({
+      message:
+        "Are you sure you want to unassign student with number " + coursePaymentInfo.mobileNumber + " from course " + coursePaymentInfo.courseName + "?",
+      header: "Confirm",
+      icon: "pi pi-exclamation-triangle",
+      accept: () => {
+
+        this.studentService
+          .unassignStudentFromCourse(coursePaymentInfo.courseName, coursePaymentInfo.mobileNumber)
+          .then((response) => {
+            this.studentAssignedCourses =
+              this.studentAssignedCourses.filter(
+                (val) =>
+                  val.mobileNumber !== coursePaymentInfo.mobileNumber
+              );
+            this.studentAssignedCourses = [...this.studentAssignedCourses];
+          })
+          .catch(() => {
+            this.showError("Unassigning student has failed");
+          });
+      },
+    });
+
   }
 
   deleteCoursePaymentInfo(coursePaymentInfo) {
@@ -253,7 +343,18 @@ export class LibraryAdminDashboardComponent implements OnInit {
     this.academicYearService
       .getAllAcademicYears()
       .then((response) => {
-        this.academicYears = response;
+
+        let responseAcademicYears : AcademicYear[] = [];
+        response.forEach(function (year) {
+            let academicYear = {year: year}
+          responseAcademicYears.push(academicYear)
+          }
+        );
+        this.academicYears = [...responseAcademicYears];
+
+        this.academicYearNames = this.academicYears.map(
+          (value) => value.year
+        );
       })
       .catch(() => {
         this.showError("Retrieving academic years has failed!");
@@ -264,7 +365,17 @@ export class LibraryAdminDashboardComponent implements OnInit {
     this.facultyService
       .getAllFacultyNames()
       .then((response) => {
-        this.facultyNames = response.content;
+
+        let responseFaculties : Faculty[] = [];
+        response.content.forEach(function (name) {
+            let facultyName = {name: name}
+          responseFaculties.push(facultyName)
+          }
+        );
+         this.facultyNames = [...responseFaculties];
+        this.facultyNamesNames = this.facultyNames.map(
+          (value) => value.name
+        );
       })
       .catch(() => {
         this.showError("Retrieving faculty names has failed!");
@@ -295,6 +406,30 @@ export class LibraryAdminDashboardComponent implements OnInit {
       });
   }
 
+  getAllStudentAssignedCourses() {
+
+    this.studentService
+      .getAllAssignedCourses()
+      .then((response) => {
+        this.studentAssignedCourses = response.content;
+      })
+      .catch(() => {
+        this.showError("Retrieving Student Assigned Courses has failed!");
+      });
+  }
+
+  getAllStudentAssignedCoursePapers() {
+
+    this.studentService
+      .getAllAssignedCoursePapers()
+      .then((response) => {
+        this.studentAssignedCoursePapers = response.content;
+      })
+      .catch(() => {
+        this.showError("Retrieving Student Assigned Course Papers has failed!");
+      });
+  }
+
   filterByDeliveryAddress() {
 
     this.studentService
@@ -313,6 +448,15 @@ export class LibraryAdminDashboardComponent implements OnInit {
     this.courseDialog = true;
   }
 
+  openNewCoursePaperDialogue() {
+
+    this.isCoursePaperNameDisabled = false;
+    this.coursePaper = {};
+    this.isCoursePaperDialogueSubmitted = false;
+    this.coursePaperDialog = true;
+  }
+
+
   OpenNewCourseSlotDialog() {
     this.courseSlotOne = {};
     this.submitted = true;
@@ -324,9 +468,7 @@ export class LibraryAdminDashboardComponent implements OnInit {
       !this.course.facultyName ||
       !this.course.academicYear ||
       !this.course.pricePerMonth ||
-      !this.course.pricePerSemester ||
-      !this.course.coursePapers
-    ) {
+      !this.course.pricePerSemester) {
       return;
     }
 
@@ -335,22 +477,23 @@ export class LibraryAdminDashboardComponent implements OnInit {
   }
 
   OpenNewCourseCourseSlotDialog(course: Course) {
-    this.courseSlotOne = {};
 
+    this.courseSlotOne = {};
     this.addToCourse = true;
     this.isCourseSlotDialogueSubmitted = false;
     this.courseSlotsDialog = true;
     this.course = course;
   }
 
-  openNewCoursePaperDialogue() {
-    this.isCoursePaperNameDisabled = false;
-    this.coursePaper = {};
-    this.isCoursePaperDialogueSubmitted = false;
-    this.coursePaperDialog = true;
+  openAssignNewCoursePaperDialogue(course) {
+
+    this.course = course;
+    this.isAssignCoursePaperDialogueSubmitted = false;
+    this.assignCoursePaperDialog = true;
   }
 
   openNewCourseCoursePaperDialogue(course: Course) {
+
     this.isCoursePaperNameDisabled = false;
     this.addToCourse = true;
     this.coursePaper = {};
@@ -360,24 +503,28 @@ export class LibraryAdminDashboardComponent implements OnInit {
   }
 
   openNewEditCourseDialogue(course: Course) {
+
     this.course = course;
     this.isEditCourseDialogSubmitted = false;
     this.editCourseDialog = true;
   }
 
   openNewAcademicYearDialogue() {
+
     this.academicYearValue = undefined;
     this.isAcademicYearDialogueSubmitted = false;
     this.academicYearDialog = true;
   }
 
   openNewFacultyNameDialogue() {
+
     this.facultyName = undefined;
     this.isFacultyNameDialogueSubmitted = false;
     this.facultyNameDialog = true;
   }
 
   editCoursePaper(coursePaper: CoursePaper) {
+
     this.isCoursePaperNameDisabled = true;
     this.coursePaper = {};
     this.coursePaper = coursePaper;
@@ -463,15 +610,27 @@ export class LibraryAdminDashboardComponent implements OnInit {
         this.courseService
           .deleteCoursePaperFromCourse(courseName, coursePaperName)
           .then(() => {
-            console.log(this.course.coursePapers);
-            let course = this.course.coursePapers.filter(
-              (val) => val.coursePaperName !== coursePaperName
+
+            let coursename = this.courses.find(
+              (value) => value.courseName == courseName
             );
-            // this.coursePapers = [...this.coursePapers];
-            //
-            // this.coursePaperNames = this.coursePaperNames.filter(val => val !== coursePaper.coursePaperName);
-            // this.coursePaperNames = [...this.coursePaperNames];
-            console.log(course);
+
+            let courseIndex = this.courses.findIndex(
+              (value) => value.courseName == courseName
+            );
+
+            this.courses.splice(courseIndex, 1);
+
+            let newCourse: Course = coursename;
+
+            let coursePaperIndex = newCourse.coursePapers.findIndex(
+              (value) => value.coursePaperName == coursePaperName
+            );
+
+            newCourse.coursePapers.splice(coursePaperIndex, 1);
+            this.courses.push(newCourse);
+
+
             this.messageService.add({
               severity: "success",
               summary: "Successful",
@@ -483,13 +642,6 @@ export class LibraryAdminDashboardComponent implements OnInit {
           .catch(() => {
             this.showError("Deleting course paper has failed!");
           });
-      },
-      reject: (type) => {
-        this.messageService.add({
-          severity: "warn",
-          summary: "Cancelled",
-          detail: "You have cancelled",
-        });
       },
     });
   }
@@ -532,6 +684,46 @@ export class LibraryAdminDashboardComponent implements OnInit {
     });
   }
 
+  deleteAcademicYear(academicYear) {
+    this.confirmationService.confirm({
+      message: "Are you sure you want to delete " + academicYear.year + "?",
+      header: "Confirm",
+      icon: "pi pi-exclamation-triangle",
+      accept: () => {
+        this.academicYearService
+          .deleteAcademicYear(academicYear.year)
+          .then(() => {
+
+
+            let academicYearIndex = this.academicYears.findIndex(
+              (value) => value.year == academicYear.year
+            );
+
+            this.academicYears.splice(academicYearIndex, 1);
+
+            let academicYearNameIndex = this.academicYearNames.findIndex(
+              (value) => value == academicYear.year
+            );
+
+            console.log(academicYearIndex);
+
+            this.academicYearNames.splice(academicYearNameIndex, 1);
+
+            this.messageService.add({
+              severity: "success",
+              summary: "Successful",
+              detail: "Academic Year Deleted successfully",
+              life: 3000,
+            });
+          })
+          .catch(() => {
+            this.showError("Deleting Academic Year has failed!");
+          });
+      },
+    });
+
+
+  }
   hideDialog() {
     this.courseDialog = false;
     this.submitted = false;
@@ -565,6 +757,11 @@ export class LibraryAdminDashboardComponent implements OnInit {
   hideFacultyNameDialog() {
     this.facultyNameDialog = false;
     this.isFacultyNameDialogueSubmitted = false;
+  }
+
+  hideAssignCoursePaperDialog() {
+    this.assignCoursePaperDialog = false;
+    this.isAssignCoursePaperDialogueSubmitted = false;
   }
 
   hideEditCourseDialog() {
@@ -618,7 +815,7 @@ export class LibraryAdminDashboardComponent implements OnInit {
     this.isCourseSlotDialogueSubmitted = true;
 
     if (
-      !this.courseSlotOne.day ||
+      !this.selectedCourseSlotDays ||
       !this.courseSlotOne.startTime ||
       !this.courseSlotOne.endTime ||
       !this.courseSlotOne.maxNumberOfBookings
@@ -626,9 +823,12 @@ export class LibraryAdminDashboardComponent implements OnInit {
       return;
     }
 
+    this.courseSlotOne.day = this.selectedCourseSlotDays.join(", ");
+
     this.courseService
       .addCourseSlotToCourse(this.course.courseName, this.courseSlotOne)
       .then(() => {
+
         this.course.courseSlots.push(this.courseSlotOne);
         this.courses.push(this.course);
         this.courses = [...this.courses];
@@ -639,6 +839,7 @@ export class LibraryAdminDashboardComponent implements OnInit {
           life: 3000,
         });
         this.courseSlotOne = {};
+        this.selectedCourseSlotDays = [];
       })
       .catch(() => {
         this.showError("Updating courses has failed!");
@@ -690,7 +891,8 @@ export class LibraryAdminDashboardComponent implements OnInit {
     this.isCourseSlotDialogueSubmitted = true;
 
     if (
-      !this.courseSlotOne.day ||
+      !this.selectedCoursePaperNames ||
+      !this.selectedCourseSlotDays ||
       !this.courseSlotOne.startTime ||
       !this.courseSlotOne.endTime ||
       !this.courseSlotOne.maxNumberOfBookings ||
@@ -708,6 +910,8 @@ export class LibraryAdminDashboardComponent implements OnInit {
         )
       );
     }
+
+    this.courseSlotOne.day = this.selectedCourseSlotDays.join(", ");
 
     let selectedCourseSlots = [];
     selectedCourseSlots.push(this.courseSlotOne);
@@ -733,6 +937,7 @@ export class LibraryAdminDashboardComponent implements OnInit {
       });
 
     this.selectedCoursePaperNames = [];
+    this.selectedCourseSlotDays = [];
     this.courseSlotOne = {};
 
     // this.courses = [...this.courses];
@@ -740,7 +945,52 @@ export class LibraryAdminDashboardComponent implements OnInit {
     this.courseDialog = false;
   }
 
+  saveCourseWithAssignedCoursePapers() {
+    this.isAssignCoursePaperDialogueSubmitted = true;
+
+    if (
+      !this.selectedCoursePaperNames
+    ) {
+      return;
+    }
+
+    for (let i = 0; i < this.selectedCoursePaperNames.length; i++) {
+
+       let coursePaper = this.coursePapers.find(
+          (value) => value.coursePaperName == this.selectedCoursePaperNames[i]
+        )
+
+      this.courseService
+        .addCoursePaperToCourse(this.course.courseName, coursePaper)
+        .then(() => {
+
+          this.course.coursePapers.push(coursePaper);
+
+          let coursePaperIndex = this.courses.findIndex(
+            (value) => value.courseName == this.course.courseName
+          )
+
+          this.courses[coursePaperIndex] = (this.course);
+          this.courses = [...this.courses];
+          this.messageService.add({
+            severity: "success",
+            summary: "Successful",
+            detail: "Course is updated successfully",
+            life: 3000,
+          });
+          this.coursePaper = {};
+        })
+        .catch(() => {
+          this.showError("Updating courses has failed!");
+        });
+
+    }
+    this.selectedCoursePaperNames = [];
+    this.assignCoursePaperDialog = false;
+  }
+
   saveCoursePaper() {
+
     this.isCoursePaperDialogueSubmitted = true;
 
     if (
@@ -762,7 +1012,6 @@ export class LibraryAdminDashboardComponent implements OnInit {
       this.coursePaperService
         .updateCoursePaper(this.coursePaper)
         .then(() => {
-          console.log(this.courses);
 
           for (let i = 0; i < this.coursePapers.length; i++) {
             if (
@@ -793,7 +1042,7 @@ export class LibraryAdminDashboardComponent implements OnInit {
 
           this.coursePaperNames.push(this.coursePaper.coursePaperName);
           this.coursePaperNames = [...this.coursePaperNames];
-          console.log(this.coursePaperNames);
+
           this.messageService.add({
             severity: "success",
             summary: "Successful",
@@ -807,7 +1056,6 @@ export class LibraryAdminDashboardComponent implements OnInit {
         });
     }
 
-    // this.courses = [...this.courses];
     this.coursePaperDialog = false;
   }
 
@@ -825,8 +1073,12 @@ export class LibraryAdminDashboardComponent implements OnInit {
     this.academicYearService
       .createAcademicYear(this.academicYearValue.getFullYear())
       .then(() => {
-        this.academicYears.push(this.academicYearValue.getFullYear());
+
+        let academicYear: AcademicYear = {year: this.academicYearValue.getFullYear()};
+        this.academicYears.push(academicYear);
         this.academicYears = [...this.academicYears];
+        this.academicYearNames.push(academicYear.year)
+        this.academicYearNames = [...this.academicYearNames];
       })
       .catch(() => {
         this.showError("Saving academic year has failed!");
@@ -836,6 +1088,7 @@ export class LibraryAdminDashboardComponent implements OnInit {
   }
 
   saveFacultyName() {
+
     this.isFacultyNameDialogueSubmitted = true;
     let facultyNameIndex = this.facultyNames.findIndex(
       (value) => value == this.facultyName
@@ -849,18 +1102,17 @@ export class LibraryAdminDashboardComponent implements OnInit {
     this.facultyService
       .createFacultyName(this.facultyName)
       .then(() => {
-        this.facultyNames.push(this.facultyName);
+        let faculty: Faculty = {name: this.facultyName};
+        this.facultyNames.push(faculty);
         this.facultyNames = [...this.facultyNames];
+        this.facultyNamesNames.push(faculty.name)
+        this.facultyNamesNames = [...this.facultyNamesNames];
       })
       .catch(() => {
         this.showError("Saving faculty name has failed!");
       });
 
     this.facultyNameDialog = false;
-  }
-
-  clearNotfication() {
-    this.msgs = [];
   }
 
   showError(text: string) {

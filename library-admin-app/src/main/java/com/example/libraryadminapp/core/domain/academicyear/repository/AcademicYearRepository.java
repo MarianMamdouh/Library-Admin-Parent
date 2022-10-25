@@ -12,6 +12,8 @@ public interface AcademicYearRepository {
 
     void createAcademicYear(AcademicYear year);
 
+    void deleteAcademicYear(String year);
+
     List<AcademicYear> getAllYears();
 
 }

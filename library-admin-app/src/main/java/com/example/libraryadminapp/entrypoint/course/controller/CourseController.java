@@ -61,8 +61,9 @@ public class CourseController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+
     @DeleteMapping("/{courseName}/courseSlot")
-    public ResponseEntity<?> deleteCoursePaperFromCourse(
+    public ResponseEntity<?> deleteCourseSlotFromCourse(
             @PathVariable final String courseName,
             @RequestParam final Long courseSlotId) throws Exception {
 

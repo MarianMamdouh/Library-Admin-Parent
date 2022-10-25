@@ -4,17 +4,24 @@ import {CommonModule} from '@angular/common';
 import {LibraryAdminDashboardComponent} from './library-admin-dashboard/library-admin-dashboard.component';
 import {LoginComponent} from './login/login.component';
 import {AuthGuard} from './auth.guard';
+import {LoginGuard} from "./login.guard";
 
 const routes: Routes = [
 
   {
-      path: "",
-      component: LoginComponent
+      path: "login",
+      component: LoginComponent,
+      canActivate: [LoginGuard]
     },
     {
     path: "dashboard",
     component: LibraryAdminDashboardComponent,
-    canActivate: [AuthGuard]
+      canActivate: [AuthGuard]
+  },
+  {
+    path: "",
+    redirectTo: "/dashboard",
+    pathMatch: "full"
   }
 ];
 

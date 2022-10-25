@@ -40,4 +40,13 @@ public class AcademicYearController {
 
         return academicYearFacade.getAllYears();
     }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> deleteAcademicYear(@RequestParam String year) throws Exception {
+
+        academicYearFacade.deleteAcademicYear(year);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

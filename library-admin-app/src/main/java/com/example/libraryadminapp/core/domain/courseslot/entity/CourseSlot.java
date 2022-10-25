@@ -1,7 +1,6 @@
 package com.example.libraryadminapp.core.domain.courseslot.entity;
 
 import com.example.libraryadminapp.core.domain.course.entity.Course;
-import com.example.libraryadminapp.core.domain.course.utils.WeekDay;
 import lombok.*;
 
 import javax.persistence.*;
@@ -21,8 +20,7 @@ public class CourseSlot {
     private Long id;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private WeekDay day;
+    private String day;
 
     @Column(nullable = false)
     private LocalDateTime startTime;

@@ -85,6 +85,8 @@ public class CoursePaperFacadeImpl implements CoursePaperFacade {
                                 .subjectName(coursePaperListResponseModel.getSubjectName())
                                 .professorName(coursePaperListResponseModel.getProfessorName())
                                 .price(coursePaperListResponseModel.getPrice())
+                                .facultyName(coursePaperListResponseModel.getFacultyName())
+                                .academicYear(coursePaperListResponseModel.getAcademicYear())
                                 .build()
                 )
                 .collect(Collectors.toList());

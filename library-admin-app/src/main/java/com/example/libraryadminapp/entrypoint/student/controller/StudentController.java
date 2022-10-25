@@ -37,6 +37,14 @@ public class StudentController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @PostMapping("/resendOTP")
+    public ResponseEntity<?> resendOTP(@RequestParam String mobileNumber) throws Exception {
+
+        studentFacade.resendOTP(mobileNumber);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(
             @Valid @RequestBody final StudentLoginRequestDTO studentLoginDTO) throws Exception {
@@ -109,6 +117,20 @@ public class StudentController {
         return studentFacade.getAllCoursePapersPaymentInfo();
     }
 
+    @GetMapping(value = "/assignedCourses")
+    @ResponseStatus(HttpStatus.OK)
+    public Page<CoursePaymentInfoResponseDTO> getAllStudentsAssignedCoursesForUI() throws Exception {
+
+        return studentFacade.findAllByCourseSlotsExists();
+    }
+
+    @GetMapping(value = "/assignedCoursePapers")
+    @ResponseStatus(HttpStatus.OK)
+    public Page<CoursePaymentInfoResponseDTO> getAllStudentsAssignedCoursePapersForUI() throws Exception {
+
+        return studentFacade.findAllByCoursePapersExists();
+    }
+
     @GetMapping(value = "/paymentInfos/search")
     @ResponseStatus(HttpStatus.OK)
     public CoursePaymentInfoResponseDTO searchByPaymentInfoNumber(@RequestParam("paymentInfoNumber") final Integer paymentInfoNumber) throws Exception {
@@ -140,6 +162,22 @@ public class StudentController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @DeleteMapping("/courses")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> unassignStudentFromCourse(@RequestParam("courseName") final String courseName, @RequestParam("mobileNumber") String mobileNumber) throws Exception {
+
+        studentFacade.unassignStudentFromCourse(courseName, mobileNumber);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/coursePapers")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> unassignStudentFromCoursePaper(@RequestParam("coursePaperName") final String coursePaperName, @RequestParam("mobileNumber") String mobileNumber) throws Exception {
+
+        studentFacade.unassignStudentFromCoursePaper(coursePaperName, mobileNumber);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> logout(@RequestParam("mobileNumber") final String mobileNumber) throws Exception {
@@ -153,5 +191,12 @@ public class StudentController {
     public Page<CoursePaymentInfoResponseDTO> filterByDeliveryAddress() throws Exception {
 
         return studentFacade.filterByDeliveryAddress();
+    }
+
+    @GetMapping("/notifications")
+    @ResponseStatus(HttpStatus.OK)
+    public List<String> getStudentNotifications(@RequestParam("mobileNumber") final String mobileNumber) throws Exception {
+
+        return studentFacade.getStudentNotifications(mobileNumber);
     }
 }

@@ -59,7 +59,7 @@ public class CoursePaperRepositoryImpl implements CoursePaperRepository {
     @Override
     public List<CoursePaper> findAllByAcademicYearAndFacultyNameAndCoursePaperNameOrSubjectNameProfessorName(final String academicYear, final String facultyName, final String searchTerm) {
 
-        return coursePaperJpaRepository.findAllByAcademicYear_YearAndFaculty_NameAndCoursePaperNameOrSubjectNameOrProfessorName(academicYear, facultyName, searchTerm, searchTerm, searchTerm);
+        return coursePaperJpaRepository.findAllByAcademicYear_YearAndFaculty_NameAndCoursePaperNameContainsIgnoreCaseOrSubjectNameContainsIgnoreCaseOrProfessorNameContainsIgnoreCase(academicYear, facultyName, searchTerm, searchTerm, searchTerm);
 
     }
 
@@ -70,12 +70,12 @@ public class CoursePaperRepositoryImpl implements CoursePaperRepository {
          coursePaperJpaRepository.deleteByCoursePaperName(coursePaperName);
     }
 
-    @Override
-    @Transactional
-    public List<CoursePaper> findAllByCourseId(final long courseId) {
-
-     return coursePaperJpaRepository.findAllByCourseId(courseId);
-    }
+//    @Override
+//    @Transactional
+//    public List<CoursePaper> findAllByCourseId(final long courseId) {
+//
+//     return coursePaperJpaRepository.findAllByCourseId(courseId);
+//    }
 
 
 }

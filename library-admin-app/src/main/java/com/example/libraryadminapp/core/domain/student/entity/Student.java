@@ -46,6 +46,10 @@ public class Student {
 
     private String fcmToken;
 
+    @ElementCollection
+    @CollectionTable(name = "student_notification", joinColumns = @JoinColumn(name = "student_id"))
+    private List<String> notification;
+
     @ManyToMany
     private List<CoursePaper> coursePapers;
 

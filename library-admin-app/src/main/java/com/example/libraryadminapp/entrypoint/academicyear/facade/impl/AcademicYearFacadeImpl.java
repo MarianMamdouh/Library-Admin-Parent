@@ -15,10 +15,16 @@ public class AcademicYearFacadeImpl implements AcademicYearFacade {
 
 
     @Override
-    public void createAcademicYear(String year) {
+    public void createAcademicYear(final String year) {
 
         academicYearService.createAcademicYear(year);
 
+    }
+
+    @Override
+    public void deleteAcademicYear(final String year) {
+
+        academicYearService.deleteAcademicYear(year);
     }
 
     @Override

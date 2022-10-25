@@ -6,5 +6,7 @@ public interface AcademicYearFacade {
 
     void createAcademicYear(String year);
 
+    void deleteAcademicYear(String year);
+
     List<String> getAllYears();
 }

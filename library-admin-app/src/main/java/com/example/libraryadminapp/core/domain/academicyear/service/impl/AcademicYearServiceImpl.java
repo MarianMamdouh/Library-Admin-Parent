@@ -6,6 +6,7 @@ import com.example.libraryadminapp.core.domain.academicyear.service.AcademicYear
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,13 @@ public class AcademicYearServiceImpl implements AcademicYearService {
                 .build();
 
         academicYearRepository.createAcademicYear(academicYear);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAcademicYear(String year) {
+
+        academicYearRepository.deleteAcademicYear(year);
     }
 
     @Override

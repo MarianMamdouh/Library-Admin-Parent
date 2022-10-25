@@ -8,6 +8,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -41,8 +42,8 @@ public class Course {
     @OneToMany(mappedBy = "id")
     private List<CourseSlot> courseSlots;
 
-    @OneToMany(mappedBy = "id")
-    private List<CoursePaper> coursePapers;
+    @ManyToMany
+    private List<CoursePaper> coursePapers = new ArrayList<>();
 
     @OneToOne
     @JoinColumn(name = "academic_year_id")

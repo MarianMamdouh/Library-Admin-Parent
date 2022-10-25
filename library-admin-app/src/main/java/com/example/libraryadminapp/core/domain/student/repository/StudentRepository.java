@@ -1,6 +1,7 @@
 package com.example.libraryadminapp.core.domain.student.repository;
 
 import com.example.libraryadminapp.core.domain.student.entity.Student;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,5 +22,7 @@ public interface StudentRepository {
 
     void deleteAll();
 
+    Page<Student> findAll();
 
+    Page<Student> findAllByCourseSlotsExists();
 }

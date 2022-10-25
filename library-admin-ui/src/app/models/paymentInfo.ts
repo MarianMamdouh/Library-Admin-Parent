@@ -2,7 +2,7 @@ export interface PaymentInfo {
 
   courseName?:string;
   coursePaperName?:string;
-  studentName?:string;
+  mobileNumber?:string;
   paymentNumber?:number;
   deliveryAddress?:string;
 

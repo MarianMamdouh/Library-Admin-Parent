@@ -17,7 +17,7 @@ public interface CoursePaperRepository {
 
     void deleteByCoursePaperName(String coursePaperName);
 
-    List<CoursePaper> findAllByCourseId(long courseId);
+//    List<CoursePaper> findAllByCourseId(long courseId);
 
     Page<CoursePaper> findAll();
 

@@ -8,6 +8,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,13 @@ public class AcademicYearRepositoryImpl implements AcademicYearRepository {
     public void createAcademicYear(AcademicYear year) {
 
         academicYearJpaRepository.save(year);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAcademicYear(String year) {
+
+        academicYearJpaRepository.deleteByYear(year);
     }
 
     @Override

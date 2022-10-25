@@ -12,7 +12,6 @@ import com.example.libraryadminapp.core.domain.course.response.CoursePaperRespon
 import com.example.libraryadminapp.core.domain.course.response.CourseSlotResponseModel;
 import com.example.libraryadminapp.core.domain.course.service.CourseService;
 import com.example.libraryadminapp.core.domain.course.utils.CourseStatus;
-import com.example.libraryadminapp.core.domain.course.utils.WeekDay;
 import com.example.libraryadminapp.core.domain.coursepaper.entity.CoursePaper;
 import com.example.libraryadminapp.core.domain.coursepaper.repository.CoursePaperRepository;
 import com.example.libraryadminapp.core.domain.courseslot.entity.CourseSlot;
@@ -21,8 +20,6 @@ import com.example.libraryadminapp.core.domain.faculty.entity.Faculty;
 import com.example.libraryadminapp.core.domain.faculty.repository.FacultyRepository;
 import com.example.libraryadminapp.core.domain.student.entity.Student;
 import com.example.libraryadminapp.core.domain.student.repository.StudentRepository;
-import com.example.libraryadminapp.core.firebase.service.impl.FirebaseMessagingServiceImpl;
-import com.google.firebase.messaging.FirebaseMessagingException;
 import lombok.AllArgsConstructor;
 import org.assertj.core.util.Lists;
 import org.springframework.data.domain.Page;
@@ -31,6 +28,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,7 +44,6 @@ public class CourseServiceImpl implements CourseService {
     private final AcademicYearRepository academicYearRepository;
     private final FacultyRepository facultyRepository;
     private final StudentRepository studentRepository;
-    private final FirebaseMessagingServiceImpl firebaseMessagingService;
 
     public void createCourse(final CourseRequestModel courseRequestModel) {
 
@@ -67,16 +64,22 @@ public class CourseServiceImpl implements CourseService {
         createOrUpdateCoursePaper(courseRequestModel.getCoursePapers(), course, academicYear, faculty);
 
         students.forEach(student -> {
-            try {
+//            try {
+            final String notificationBody = "Course " + course.getCourseName() + " has been added in our library!";
+//                firebaseMessagingService.sendNotification(student.getFcmToken(), "New Course Added", notificationBody);
+            student.getNotification().add(notificationBody);
 
-                firebaseMessagingService.sendNotification(student.getFcmToken(), "New Course Added", "Course " + course.getCourseName() + " has been added in our library!");
-            } catch (FirebaseMessagingException e) {
+            studentRepository.save(student);
 
-//                throw new RuntimeException(e);
-            }
+//            } catch (FirebaseMessagingException e) {
+//
+////                throw new RuntimeException(e);
+//            }
 
         });
+
     }
+
     public void updateCourse(final CourseRequestModel courseRequestModel) {
 
         final Course course = findByCourseName(courseRequestModel.getCourseName());
@@ -89,7 +92,7 @@ public class CourseServiceImpl implements CourseService {
 
         final Course course = findByCourseName(courseName);
 
-        updateCoursePapers(coursePaperRequestModel, course);
+        addCoursePaperToCourse(coursePaperRequestModel, course);
     }
 
     @Override
@@ -98,9 +101,12 @@ public class CourseServiceImpl implements CourseService {
         final CoursePaper coursePaper = coursePaperRepository.findByName(coursePaperName)
                 .orElseThrow(() -> new IllegalArgumentException("Course Paper " + coursePaperName + " can't be found"));
 
-        coursePaper.setCourse(null);
+        final Course course = courseRepository.findByCourseName(courseName)
+                .orElseThrow(() -> new IllegalArgumentException("Course " + courseName + " can't be found"));
 
-        coursePaperRepository.save(coursePaper);
+        course.getCoursePapers().remove(coursePaper);
+
+        courseRepository.save(course);
     }
 
     @Override
@@ -122,12 +128,12 @@ public class CourseServiceImpl implements CourseService {
 
         final Course course = findByCourseName(courseName);
 
-        final List<CoursePaper> coursePapers = coursePaperRepository.findAllByCourseId(course.getId());
-
-        coursePapers.forEach(
-
-                coursePaper -> coursePaperRepository.deleteByCoursePaperName(coursePaper.getCoursePaperName())
-        );
+//        final List<CoursePaper> coursePapers = coursePaperRepository.findAllByCourseId(course.getId());
+//
+//        coursePapers.forEach(
+//
+//                coursePaper -> coursePaperRepository.deleteByCoursePaperName(coursePaper.getCoursePaperName())
+//        );
 
         final List<CourseSlot> courseSlots = courseSlotRepository.findAllByCourseId(course.getId());
 
@@ -156,13 +162,20 @@ public class CourseServiceImpl implements CourseService {
         return courseRepository.save(course);
     }
 
-    private void updateCoursePapers(final CoursePaperRequestModel coursePaperRequestModel, final Course course) {
+    private void addCoursePaperToCourse(final CoursePaperRequestModel coursePaperRequestModel, final Course course) {
 
-        final Optional<CoursePaper> coursePaperOptional = coursePaperRepository.findByName(coursePaperRequestModel.getCoursePaperName());
+        final Optional<CoursePaper> coursePaperOptional = coursePaperRepository.findByName(coursePaperRequestModel.getCoursePaperName());/**/
 
         coursePaperOptional.ifPresentOrElse(existingCoursePaper -> {
 
-           throw new IllegalArgumentException("Course Paper " + coursePaperRequestModel.getCoursePaperName() + " already assigned to course " + course.getCourseName());
+            if (course.getCoursePapers().contains(existingCoursePaper)) {
+
+                throw new IllegalArgumentException("Course Paper " + coursePaperRequestModel.getCoursePaperName() + " already assigned to course " + course.getCourseName());
+            } else {
+
+                course.getCoursePapers().add(existingCoursePaper);
+                courseRepository.save(course);
+            }
         }, () -> {
 
             final AcademicYear academicYear = findByYear(coursePaperRequestModel.getAcademicYear());
@@ -175,10 +188,12 @@ public class CourseServiceImpl implements CourseService {
                     .price(coursePaperRequestModel.getPrice())
                     .faculty(faculty)
                     .academicYear(academicYear)
-                    .course(course)
+//                    .course(course)
                     .build();
 
             coursePaperRepository.save(coursePaper);
+            course.getCoursePapers().add(coursePaper);
+            courseRepository.save(course);
 
         });
     }
@@ -186,7 +201,7 @@ public class CourseServiceImpl implements CourseService {
     private void updateCourseSlots(final CourseSlotRequestModel courseSlotRequestModel, final Course course) {
 
         final CourseSlot courseSlot = CourseSlot.builder()
-                .day(WeekDay.valueOf(courseSlotRequestModel.getDay()))
+                .day(courseSlotRequestModel.getDay())
                 .startTime(LocalDateTime.of(LocalDate.now(), courseSlotRequestModel.getStartTime()))
                 .endTime(LocalDateTime.of(LocalDate.now(), courseSlotRequestModel.getEndTime()))
                 .maximumNumberOfBookings(courseSlotRequestModel.getMaxNumberOfBookings())
@@ -260,29 +275,6 @@ public class CourseServiceImpl implements CourseService {
         List<Course> courses = courseRepository.findAllByAcademicYearAndFacultyNameAndCourseNameOrSubjectNameOrProfessorName(academicYear, facultyName, searchName);
 
         return courses.stream().map(course ->
-                CourseListResponseModel
-                        .builder()
-                        .courseName(course.getCourseName())
-                        .professorName(course.getProfessorName())
-                        .subjectName(course.getSubjectName())
-                        .pricePerSemester(course.getPricePerSemester())
-                        .pricePerMonth(course.getPricePerMonth())
-                        .facultyName(course.getFaculty().getName())
-                        .academicYear(course.getAcademicYear().getYear())
-                        .courseSlots(getCourseSLotsForCourse(course))
-                        .coursePapers(getCoursePapersForCourse(course))
-                        .courseStatus(getCourseStatus(course, mobileNumber))
-                        .build()
-        )
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public Page<CourseListResponseModel> searchCourses(final String searchTerm) {
-
-        Page<Course> courses = courseRepository.findAllByCourseNameOrSubjectNameOrProfessorName(searchTerm);
-
-        return courses.map(course ->
                         CourseListResponseModel
                                 .builder()
                                 .courseName(course.getCourseName())
@@ -294,8 +286,31 @@ public class CourseServiceImpl implements CourseService {
                                 .academicYear(course.getAcademicYear().getYear())
                                 .courseSlots(getCourseSLotsForCourse(course))
                                 .coursePapers(getCoursePapersForCourse(course))
+                                .courseStatus(getCourseStatus(course, mobileNumber))
                                 .build()
-                );
+                )
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<CourseListResponseModel> searchCourses(final String searchTerm) {
+
+        Page<Course> courses = courseRepository.findAllByCourseNameOrSubjectNameOrProfessorName(searchTerm);
+
+        return courses.map(course ->
+                CourseListResponseModel
+                        .builder()
+                        .courseName(course.getCourseName())
+                        .professorName(course.getProfessorName())
+                        .subjectName(course.getSubjectName())
+                        .pricePerSemester(course.getPricePerSemester())
+                        .pricePerMonth(course.getPricePerMonth())
+                        .facultyName(course.getFaculty().getName())
+                        .academicYear(course.getAcademicYear().getYear())
+                        .courseSlots(getCourseSLotsForCourse(course))
+                        .coursePapers(getCoursePapersForCourse(course))
+                        .build()
+        );
     }
 
     private String getCourseStatus(final Course course, final String mobileNumber) {
@@ -304,25 +319,27 @@ public class CourseServiceImpl implements CourseService {
 
         final List<CourseSlot> courseSlots = student.getCourseSlots();
 
-        if (course.getCourseSlots().stream()
+        final List<CourseSlot> courseCourseSlots = courseSlotRepository.findAllByCourseId(course.getId());
+
+        if (courseCourseSlots.stream()
                 .anyMatch(courseSlots::contains)) {
 
             return CourseStatus.ALREADY_BOOKED.toString();
         }
 
-      if (course.getCourseSlots()
-              .stream()
-              .allMatch(courseSlot -> Objects.equals(courseSlot.getCurrentNumberOfBookings(), courseSlot.getMaximumNumberOfBookings()))) {
+        if (course.getCourseSlots()
+                .stream()
+                .allMatch(courseSlot -> Objects.equals(courseSlot.getCurrentNumberOfBookings(), courseSlot.getMaximumNumberOfBookings()))) {
 
-          return CourseStatus.FULLY_BOOKED.toString();
-      }
+            return CourseStatus.FULLY_BOOKED.toString();
+        }
 
-      return CourseStatus.AVAILABLE_TO_BOOK.toString();
+        return CourseStatus.AVAILABLE_TO_BOOK.toString();
     }
 
     private List<CoursePaperResponseModel> getCoursePapersForCourse(final Course course) {
 
-        final List<CoursePaper> coursePapers = coursePaperRepository.findAllByCourseId(course.getId());
+        final List<CoursePaper> coursePapers = course.getCoursePapers();
 
         return coursePapers.stream()
                 .map(this::buildCoursePaperResponseModel)
@@ -357,7 +374,7 @@ public class CourseServiceImpl implements CourseService {
         return CourseSlotResponseModel
                 .builder()
                 .id(courseSlot.getId())
-                .day(courseSlot.getDay().name())
+                .day(courseSlot.getDay())
                 .startTime(courseSlot.getStartTime().toLocalTime())
                 .endTime(courseSlot.getEndTime().toLocalTime())
                 .maxNumberOfBookings(courseSlot.getMaximumNumberOfBookings())
@@ -378,6 +395,8 @@ public class CourseServiceImpl implements CourseService {
                 .professorName(courseCreationRequestModel.getProfessorName())
                 .academicYear(academicYear)
                 .faculty(faculty)
+                .courseSlots(new ArrayList<>())
+                .coursePapers(new ArrayList<>())
                 .build();
     }
 
@@ -390,12 +409,13 @@ public class CourseServiceImpl implements CourseService {
                     coursePaperRepository.findByName(coursePaperRequestModel.getCoursePaperName())
                             .ifPresentOrElse(coursePaper1 -> {
 
-                                coursePaper1.setCourse(course);
-                                coursePaperRepository.save(coursePaper1);
-                                }, () -> {
+                                course.getCoursePapers().add(coursePaper1);
+                                courseRepository.save(course);
+                            }, () -> {
 
                                 CoursePaper coursePaper2 = buildCoursePaperEntity(course, coursePaperRequestModel, academicYear, faculty);
-                                coursePaperRepository.save(coursePaper2);
+                                course.getCoursePapers().add(coursePaper2);
+                                courseRepository.save(course);
                             });
                 });
     }
@@ -412,7 +432,6 @@ public class CourseServiceImpl implements CourseService {
                 .price(coursePaperRequestModel.getPrice())
                 .academicYear(academicYear)
                 .faculty(faculty)
-                .course(course)
                 .build();
     }
 
@@ -428,7 +447,7 @@ public class CourseServiceImpl implements CourseService {
 
         return CourseSlot
                 .builder()
-                .day(WeekDay.valueOf(courseSlotRequestModel.getDay()))
+                .day(courseSlotRequestModel.getDay())
                 .startTime(LocalDateTime.of(LocalDate.now(), courseSlotRequestModel.getStartTime()))
                 .endTime(LocalDateTime.of(LocalDate.now(), courseSlotRequestModel.getEndTime()))
                 .maximumNumberOfBookings(courseSlotRequestModel.getMaxNumberOfBookings())

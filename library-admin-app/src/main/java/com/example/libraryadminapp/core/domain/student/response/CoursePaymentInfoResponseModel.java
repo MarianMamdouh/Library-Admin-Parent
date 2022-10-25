@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 public class CoursePaymentInfoResponseModel {
 
-    private String studentName;
+    private String mobileNumber;
     private Integer paymentNumber;
     private String courseName;
     private String coursePaperName;

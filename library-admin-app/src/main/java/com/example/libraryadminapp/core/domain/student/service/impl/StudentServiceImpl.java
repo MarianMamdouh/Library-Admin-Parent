@@ -14,14 +14,15 @@ import com.example.libraryadminapp.core.domain.student.entity.Student;
 import com.example.libraryadminapp.core.domain.student.repository.StudentRepository;
 import com.example.libraryadminapp.core.domain.student.request.StudentCreationRequestModel;
 import com.example.libraryadminapp.core.domain.student.request.StudentLoginRequestModel;
-import com.example.libraryadminapp.core.domain.student.response.StudentLoginResponseModel;
 import com.example.libraryadminapp.core.domain.student.response.CoursePaymentInfoResponseModel;
 import com.example.libraryadminapp.core.domain.student.response.StudentCoursePaperResponseModel;
 import com.example.libraryadminapp.core.domain.student.response.StudentCourseResponseModel;
+import com.example.libraryadminapp.core.domain.student.response.StudentLoginResponseModel;
 import com.example.libraryadminapp.core.domain.student.service.StudentService;
 import com.example.libraryadminapp.core.domain.student.utils.Status;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -78,7 +79,7 @@ public class StudentServiceImpl implements StudentService {
         final Pattern pattern = Pattern.compile("^01[0125][0-9]{8}$");
         final Matcher matcher = pattern.matcher(mobileNumber);
 
-        if(!matcher.matches()) {
+        if (!matcher.matches()) {
 
             throw new IllegalArgumentException("Mobile number format is incorrect");
         }
@@ -117,7 +118,7 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public void verifyStudentOTP(String otp, String mobileNumber) throws IOException {
 
-        if(!studentRepository.existsByMobileNumberAndOTP(mobileNumber, otp)) {
+        if (!studentRepository.existsByMobileNumberAndOTP(mobileNumber, otp)) {
 
             throw new IllegalArgumentException("OTP is incorrect, Please recheck and try again!");
         }
@@ -125,6 +126,23 @@ public class StudentServiceImpl implements StudentService {
         final Student student = studentRepository.findByMobileNumber(mobileNumber).get();
 
         student.setStatus(Status.ACTIVE);
+        studentRepository.save(student);
+    }
+
+    @Override
+    public void resendOTP(final String mobileNumber) throws IOException {
+
+        final Student student = findByMobileNumber(mobileNumber);
+
+        if (Status.ACTIVE.equals(student.getStatus())) {
+
+            throw new IllegalArgumentException("Student with mobile number" + mobileNumber + " is already activated ");
+        }
+
+        final String otp = verifyStudentMobileNumber(student.getMobileNumber());
+
+        student.setOtp(otp);
+
         studentRepository.save(student);
     }
 
@@ -143,7 +161,7 @@ public class StudentServiceImpl implements StudentService {
     public String verifyStudentMobileNumber(final String studentMobileNumber) throws IOException {
 
         final URL url = new URL("https://apis.cequens.com/sms/v1/messages");
-        final HttpURLConnection http = (HttpURLConnection)url.openConnection();
+        final HttpURLConnection http = (HttpURLConnection) url.openConnection();
         http.setRequestMethod("POST");
         http.setDoOutput(true);
         http.setRequestProperty("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6ImExOTIzYzViNzljOWRkOTgzZTZkZWY3MDg0NjM4YWM4ZTU4ODkzN2ZlYzM2MjM1Y2FmY2YwZGUzM2JjMDYxMzBiMTY3ZTU1MTFlMzk1YTAyMDA4YTgyOTgzYTUwMzJkNmU2MjQxY2UxYmViNzA0OWYwZDU4ZWIyMWUzZjI2MzZiNzQ4ODU5ZGRmMjY1M2ViNjk1OTg0ZGFhN2MyMzA0ZDkiLCJpYXQiOjE2NjU1Nzk3NTMsImV4cCI6MzI0MzQ1OTc1M30.OySNLJ6epmKB2hd7PnHyUvh6y7HRnmjOMKge-tMc02M");
@@ -177,8 +195,7 @@ public class StudentServiceImpl implements StudentService {
 
         if (student.getCourseSlots()
                 .stream()
-                .map(CourseSlot::getId)
-                .anyMatch(courseSlotId::equals)) {
+                .anyMatch(courseSlots::contains)) {
 
             throw new IllegalArgumentException("Student with mobile number " + mobileNumber + " is already assigned to this course " + courseName);
         }
@@ -201,7 +218,7 @@ public class StudentServiceImpl implements StudentService {
         courseSlotRepository.save(courseSlot);
 
         final Random random = new Random();
-        final Integer paymentNumber =  random.nextInt() & Integer.MAX_VALUE;
+        final Integer paymentNumber = random.nextInt() & Integer.MAX_VALUE;
         final PaymentInfo paymentInfo = PaymentInfo.builder()
                 .paymentNumber(paymentNumber)
                 .student(student)
@@ -233,7 +250,7 @@ public class StudentServiceImpl implements StudentService {
         studentRepository.save(student);
 
         final Random random = new Random();
-        final Integer paymentNumber =  random.nextInt() & Integer.MAX_VALUE;
+        final Integer paymentNumber = random.nextInt() & Integer.MAX_VALUE;
         final PaymentInfo paymentInfo = PaymentInfo.builder()
                 .paymentNumber(paymentNumber)
                 .student(student)
@@ -280,11 +297,11 @@ public class StudentServiceImpl implements StudentService {
         return paymentInfoRepository.findAllByCourseIsNotNull()
                 .map(paymentInfo ->
                         CoursePaymentInfoResponseModel.builder()
-                                .studentName(paymentInfo.getStudent().getStudentName())
+                                .mobileNumber(paymentInfo.getStudent().getMobileNumber())
                                 .courseName(paymentInfo.getCourse().getCourseName())
                                 .paymentNumber(paymentInfo.getPaymentNumber())
                                 .build()
-        );
+                );
     }
 
     @Override
@@ -293,7 +310,7 @@ public class StudentServiceImpl implements StudentService {
         return paymentInfoRepository.findAllByCoursePaperIsNotNull()
                 .map(paymentInfo ->
                         CoursePaymentInfoResponseModel.builder()
-                                .studentName(paymentInfo.getStudent().getStudentName())
+                                .mobileNumber(paymentInfo.getStudent().getMobileNumber())
                                 .coursePaperName(paymentInfo.getCoursePaper().getCoursePaperName())
                                 .paymentNumber(paymentInfo.getPaymentNumber())
                                 .deliveryAddress(paymentInfo.getDeliveryAddress())
@@ -308,9 +325,9 @@ public class StudentServiceImpl implements StudentService {
                 .orElseThrow(() -> new IllegalArgumentException("Payment info with number " + paymentInfoNumber + " can't be found"));
 
         return CoursePaymentInfoResponseModel.builder()
-                .studentName(paymentInfo.getStudent().getStudentName())
-                .coursePaperName(Objects.nonNull(paymentInfo.getCoursePaper())? paymentInfo.getCoursePaper().getCoursePaperName(): null)
-                .courseName(Objects.nonNull(paymentInfo.getCourse())? paymentInfo.getCourse().getCourseName(): null)
+                .mobileNumber(paymentInfo.getStudent().getStudentName())
+                .coursePaperName(Objects.nonNull(paymentInfo.getCoursePaper()) ? paymentInfo.getCoursePaper().getCoursePaperName() : null)
+                .courseName(Objects.nonNull(paymentInfo.getCourse()) ? paymentInfo.getCourse().getCourseName() : null)
                 .paymentNumber(paymentInfo.getPaymentNumber())
                 .deliveryAddress(paymentInfo.getDeliveryAddress())
                 .build();
@@ -321,38 +338,38 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     public void deleteCoursePaperPaymentInfo(final Integer paymentInfoNumber) {
 
-        final PaymentInfo paymentInfo = paymentInfoRepository.findByPaymentNumber(paymentInfoNumber)
+        paymentInfoRepository.findByPaymentNumber(paymentInfoNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Payment info with number " + paymentInfoNumber + " can't be found"));
-
-        final CoursePaper coursePaper = paymentInfo.getCoursePaper();
-
-        final Student student = paymentInfo.getStudent();
-
-        student.getCoursePapers().remove(coursePaper);
-
-        studentRepository.save(student);
 
         paymentInfoRepository.deleteByPaymentNumber(paymentInfoNumber);
     }
 
     @Override
-    public void deleteCoursePaymentInfo(final Integer paymentInfoNumber) {
+    @Transactional
+    public void unassignStudentFromCoursePaper(final String coursePaperName, final String mobileNumber) {
 
-        final PaymentInfo paymentInfo = paymentInfoRepository.findByPaymentNumber(paymentInfoNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Payment info with number " + paymentInfoNumber + " can't be found"));
+        final CoursePaper coursePaper = coursePaperRepository.findByName(coursePaperName)
+                .orElseThrow(() -> new IllegalArgumentException("Course Paper with name " + coursePaperName + " can't be found"));
 
-        final Course course = paymentInfo.getCourse();
+        final Student student = findByMobileNumber(mobileNumber);
 
-        final Student student = paymentInfo.getStudent();
-
-        final CourseSlot assignedCourseSlot = course.getCourseSlots()
-                .stream()
-                .filter(c -> new ArrayList<>(student.getCourseSlots()).contains(c))
-                        .findAny().get();
-
-        student.getCourseSlots().remove(assignedCourseSlot);
+        student.getCoursePapers().remove(coursePaper);
 
         studentRepository.save(student);
+
+        final List<PaymentInfo> paymentInfos = paymentInfoRepository.findAllByCoursePaperNameAndMobileNumber(coursePaperName, mobileNumber);
+
+        if(!paymentInfos.isEmpty()) {
+
+            paymentInfoRepository.deleteByPaymentNumber(paymentInfos.get(0).getPaymentNumber());
+        }
+    }
+
+    @Override
+    public void deleteCoursePaymentInfo(final Integer paymentInfoNumber) {
+
+        paymentInfoRepository.findByPaymentNumber(paymentInfoNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Payment info with number " + paymentInfoNumber + " can't be found"));
 
         paymentInfoRepository.deleteByPaymentNumber(paymentInfoNumber);
     }
@@ -374,12 +391,93 @@ public class StudentServiceImpl implements StudentService {
 
         return paymentInfos.map(paymentInfo ->
                 CoursePaymentInfoResponseModel.builder()
-                        .studentName(paymentInfo.getStudent().getStudentName())
+                        .mobileNumber(paymentInfo.getStudent().getStudentName())
                         .coursePaperName(paymentInfo.getCoursePaper().getCoursePaperName())
                         .paymentNumber(paymentInfo.getPaymentNumber())
                         .deliveryAddress(paymentInfo.getDeliveryAddress())
                         .build()
         );
+    }
+
+    @Override
+    public List<String> getStudentNotifications(final String mobileNumber) {
+
+        final Student student = findByMobileNumber(mobileNumber);
+
+        return student.getNotification().stream().limit(50).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public Page<CoursePaymentInfoResponseModel> findAllByCoursePapersExists() {
+
+        final List<Student> students = studentRepository.findAll()
+                .stream()
+                .filter(student -> Objects.nonNull(student.getCoursePapers()))
+                .collect(Collectors.toList());
+
+        List<CoursePaymentInfoResponseModel> coursePaymentInfoResponseModels = students
+                .stream()
+                .map(student -> student.getCoursePapers()
+                        .stream()
+                        .map(coursePaper -> CoursePaymentInfoResponseModel.builder()
+                                .mobileNumber(student.getMobileNumber())
+                                .coursePaperName(coursePaper.getCoursePaperName())
+                                .build())
+                        .collect(Collectors.toList()))
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(coursePaymentInfoResponseModels);
+    }
+
+    @Override
+    @Transactional
+    public Page<CoursePaymentInfoResponseModel> findAllByCourseSlotsExists() {
+
+        Page<Student> students = studentRepository.findAllByCourseSlotsExists();
+
+        List<CoursePaymentInfoResponseModel> coursePaymentInfoResponseModels = students
+                .stream()
+                .map(student -> student.getCoursePapers()
+                        .stream()
+                        .map(coursePaper -> CoursePaymentInfoResponseModel.builder()
+                                .mobileNumber(student.getMobileNumber())
+                                .coursePaperName(coursePaper.getCoursePaperName())
+                                .build())
+                        .distinct()
+                        .collect(Collectors.toList()))
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(coursePaymentInfoResponseModels);
+    }
+
+    @Override
+    public void unassignStudentFromCourse(final String courseName, final String mobileNumber) {
+
+        final Student student = findByMobileNumber(mobileNumber);
+
+        final Course course = courseRepository.findByCourseName(courseName)
+                .orElseThrow(() -> new IllegalArgumentException("Course with name " + courseName + "couldn't be found"));
+
+        final List<CourseSlot> courseSlots = courseSlotRepository.findAllByCourseId(course.getId());
+
+        final CourseSlot assignedCourseSlot = courseSlots
+                .stream()
+                .filter(c -> new ArrayList<>(student.getCourseSlots()).contains(c))
+                .findAny().get();
+
+        assignedCourseSlot.setCurrentNumberOfBookings(assignedCourseSlot.getCurrentNumberOfBookings() - 1);
+
+        student.getCourseSlots().remove(assignedCourseSlot);
+
+        studentRepository.save(student);
+
+        final PaymentInfo paymentInfo = paymentInfoRepository.findByCourseNameAndMobileNumber(courseName, mobileNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Payment info with course name " + courseName + " and mobile number " + mobileNumber + " can't be found"));
+
+        paymentInfoRepository.deleteByPaymentNumber(paymentInfo.getPaymentNumber());
     }
 
     private StudentCourseResponseModel buildStudentCourseResponseModel(final Course course) {
@@ -421,7 +519,7 @@ public class StudentServiceImpl implements StudentService {
 
     private Student findByMobileNumber(final String mobileNumber) {
 
-      return studentRepository.findByMobileNumber(mobileNumber)
+        return studentRepository.findByMobileNumber(mobileNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Student with mobile number " + mobileNumber + "can't be found"));
     }
 }

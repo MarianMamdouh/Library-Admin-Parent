@@ -1,5 +1,6 @@
 package com.example.libraryadminapp.entrypoint.student.facade.impl;
 
+import com.example.libraryadminapp.core.domain.student.entity.Student;
 import com.example.libraryadminapp.core.domain.student.request.StudentCreationRequestModel;
 import com.example.libraryadminapp.core.domain.student.request.StudentLoginRequestModel;
 import com.example.libraryadminapp.core.domain.student.response.CoursePaymentInfoResponseModel;
@@ -14,8 +15,10 @@ import com.example.libraryadminapp.entrypoint.student.controller.response.Studen
 import com.example.libraryadminapp.entrypoint.student.facade.StudentFacade;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Component;
 
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,6 +54,12 @@ public class StudentFacadeImpl implements StudentFacade {
     public void verifyStudentOTP(final String otp, final String mobileNumber) throws IOException {
 
         studentService.verifyStudentOTP(otp, mobileNumber);
+    }
+
+    @Override
+    public void resendOTP(final String mobileNumber) throws IOException {
+
+        studentService.resendOTP(mobileNumber);
     }
 
     @Override
@@ -113,7 +122,7 @@ public class StudentFacadeImpl implements StudentFacade {
                 .map(paymentInfoResponseModel -> CoursePaymentInfoResponseDTO
                         .builder()
                         .paymentNumber(paymentInfoResponseModel.getPaymentNumber())
-                        .studentName(paymentInfoResponseModel.getStudentName())
+                        .mobileNumber(paymentInfoResponseModel.getMobileNumber())
                         .courseName(paymentInfoResponseModel.getCourseName())
                         .build()
                 );
@@ -126,9 +135,35 @@ public class StudentFacadeImpl implements StudentFacade {
                 .map(paymentInfoResponseModel -> CoursePaymentInfoResponseDTO
                         .builder()
                         .paymentNumber(paymentInfoResponseModel.getPaymentNumber())
-                        .studentName(paymentInfoResponseModel.getStudentName())
+                        .mobileNumber(paymentInfoResponseModel.getMobileNumber())
                         .coursePaperName(paymentInfoResponseModel.getCoursePaperName())
                         .deliveryAddress(paymentInfoResponseModel.getDeliveryAddress())
+                        .build()
+                );
+    }
+
+    @Override
+    @Transactional
+    public Page<CoursePaymentInfoResponseDTO> findAllByCoursePapersExists() {
+
+        return studentService.findAllByCoursePapersExists()
+                .map(paymentInfoResponseModel -> CoursePaymentInfoResponseDTO
+                        .builder()
+                        .mobileNumber(paymentInfoResponseModel.getMobileNumber())
+                        .coursePaperName(paymentInfoResponseModel.getCoursePaperName())
+                        .build()
+                );
+    }
+
+    @Override
+    @Transactional
+    public Page<CoursePaymentInfoResponseDTO> findAllByCourseSlotsExists() {
+
+        return studentService.findAllByCourseSlotsExists()
+                .map(paymentInfoResponseModel -> CoursePaymentInfoResponseDTO
+                        .builder()
+                        .mobileNumber(paymentInfoResponseModel.getMobileNumber())
+                        .courseName(paymentInfoResponseModel.getCourseName())
                         .build()
                 );
     }
@@ -141,7 +176,7 @@ public class StudentFacadeImpl implements StudentFacade {
         return CoursePaymentInfoResponseDTO
                 .builder()
                 .paymentNumber(paymentInfoResponseModel.getPaymentNumber())
-                .studentName(paymentInfoResponseModel.getStudentName())
+                .mobileNumber(paymentInfoResponseModel.getMobileNumber())
                 .coursePaperName(paymentInfoResponseModel.getCoursePaperName())
                 .courseName(paymentInfoResponseModel.getCourseName())
                 .deliveryAddress(paymentInfoResponseModel.getDeliveryAddress())
@@ -161,6 +196,18 @@ public class StudentFacadeImpl implements StudentFacade {
     }
 
     @Override
+    public void unassignStudentFromCourse(final String courseName, final String mobileNumber) {
+
+        studentService.unassignStudentFromCourse(courseName, mobileNumber);
+    }
+
+    @Override
+    public void unassignStudentFromCoursePaper(final String coursePaperName, final String mobileNumber) {
+
+        studentService.unassignStudentFromCoursePaper(coursePaperName, mobileNumber);
+    }
+
+    @Override
     public void deleteFCMToken(final String mobileNumber) {
 
         studentService.deleteFCMToken(mobileNumber);
@@ -173,11 +220,17 @@ public class StudentFacadeImpl implements StudentFacade {
                 .map(paymentInfoResponseModel -> CoursePaymentInfoResponseDTO
                 .builder()
                 .paymentNumber(paymentInfoResponseModel.getPaymentNumber())
-                .studentName(paymentInfoResponseModel.getStudentName())
+                .mobileNumber(paymentInfoResponseModel.getMobileNumber())
                 .coursePaperName(paymentInfoResponseModel.getCoursePaperName())
                 .deliveryAddress(paymentInfoResponseModel.getDeliveryAddress())
                 .build()
         );
+    }
+
+    @Override
+    public List<String> getStudentNotifications(final String mobileNumber) {
+
+        return studentService.getStudentNotifications(mobileNumber);
     }
 
     private StudentCreationRequestModel buildStudentCreationRequestModel(final StudentCreationRequestDTO studentCreationRequestDTO) {

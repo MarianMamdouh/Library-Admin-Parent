@@ -136,6 +136,8 @@ public class CoursePaperServiceImpl implements CoursePaperService {
                         .subjectName(coursePaper.getSubjectName())
                         .professorName(coursePaper.getProfessorName())
                         .price(coursePaper.getPrice())
+                        .facultyName(coursePaper.getFaculty().getName())
+                        .academicYear(coursePaper.getAcademicYear().getYear())
                         .build()
         )
                 .collect(Collectors.toList());

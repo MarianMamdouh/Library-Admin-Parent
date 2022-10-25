@@ -20,13 +20,13 @@ public class CourseRepositoryImpl implements CourseRepository {
     private final CourseJpaRepository courseJpaRepository;
 
     @Override
-    public Course save(Course course) {
+    public Course save(final Course course) {
 
         return courseJpaRepository.save(course);
     }
 
     @Override
-    public Optional<Course> findByCourseName(String courseName) {
+    public Optional<Course> findByCourseName(final String courseName) {
 
         return courseJpaRepository.findByCourseName(courseName);
     }
@@ -40,13 +40,13 @@ public class CourseRepositoryImpl implements CourseRepository {
 
     @Override
     @Transactional
-    public void deleteByCourseName(String courseName) {
+    public void deleteByCourseName(final String courseName) {
 
         courseJpaRepository.deleteByCourseName(courseName);
     }
 
     @Override
-    public Page<Course> findAllByCourseNameOrSubjectNameOrProfessorName(String searchName) {
+    public Page<Course> findAllByCourseNameOrSubjectNameOrProfessorName(final String searchName) {
 
         return courseJpaRepository.findAllByCourseNameOrSubjectNameOrProfessorName(searchName, searchName, searchName, Pageable.unpaged());
     }
@@ -54,11 +54,11 @@ public class CourseRepositoryImpl implements CourseRepository {
     @Override
     public List<Course> findAllByAcademicYearAndFacultyNameAndCourseNameOrSubjectNameOrProfessorName(final String academicYear, final String facultyName, final String searchTerm) {
 
-        return courseJpaRepository.findAllByAcademicYear_YearAndFaculty_NameAndCourseNameOrSubjectNameOrProfessorName(academicYear, facultyName, searchTerm, searchTerm, searchTerm);
+        return courseJpaRepository.findAllByAcademicYear_YearAndFaculty_NameAndCourseNameContainsIgnoreCaseOrSubjectNameContainsIgnoreCaseOrProfessorNameContainsIgnoreCase(academicYear, facultyName, searchTerm, searchTerm, searchTerm);
     }
 
     @Override
-    public List<Course> findAllByAcademicYearAndFacultyName(String academicYear, String facultyName) {
+    public List<Course> findAllByAcademicYearAndFacultyName(final String academicYear, final String facultyName) {
 
         return courseJpaRepository.findAllByAcademicYear_YearAndFaculty_Name(academicYear, facultyName);
     }

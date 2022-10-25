@@ -1,5 +1,6 @@
 package com.example.libraryadminapp.entrypoint.student.facade;
 
+import com.example.libraryadminapp.core.domain.student.response.CoursePaymentInfoResponseModel;
 import com.example.libraryadminapp.entrypoint.student.controller.request.StudentCreationRequestDTO;
 import com.example.libraryadminapp.entrypoint.student.controller.request.StudentLoginRequestDTO;
 import com.example.libraryadminapp.entrypoint.student.controller.request.StudentLoginResponseDTO;
@@ -18,6 +19,8 @@ public interface StudentFacade {
     StudentLoginResponseDTO login(StudentLoginRequestDTO studentLoginDTO);
 
     void verifyStudentOTP(String otp, String mobileNumber) throws IOException;
+
+    void resendOTP(String mobileNumber) throws IOException;
 
     void setFCMToken(String fcmToken, String mobileNumber) throws IOException;
 
@@ -39,7 +42,17 @@ public interface StudentFacade {
 
     void deleteCoursePaymentInfo(Integer paymentInfoNumber);
 
+    void unassignStudentFromCourse(String courseName,String mobileNumber);
+
+    void unassignStudentFromCoursePaper(String coursePaperName, String mobileNumber);
+
     void deleteFCMToken(String mobileNumber);
 
     Page<CoursePaymentInfoResponseDTO> filterByDeliveryAddress();
+
+    List<String> getStudentNotifications(String mobileNumber);
+
+    Page<CoursePaymentInfoResponseDTO> findAllByCoursePapersExists();
+
+    Page<CoursePaymentInfoResponseDTO> findAllByCourseSlotsExists();
 }

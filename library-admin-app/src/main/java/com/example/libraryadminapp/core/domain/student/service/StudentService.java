@@ -1,12 +1,12 @@
 package com.example.libraryadminapp.core.domain.student.service;
 
+import com.example.libraryadminapp.core.domain.student.entity.Student;
 import com.example.libraryadminapp.core.domain.student.request.StudentCreationRequestModel;
 import com.example.libraryadminapp.core.domain.student.request.StudentLoginRequestModel;
 import com.example.libraryadminapp.core.domain.student.response.StudentLoginResponseModel;
 import com.example.libraryadminapp.core.domain.student.response.CoursePaymentInfoResponseModel;
 import com.example.libraryadminapp.core.domain.student.response.StudentCoursePaperResponseModel;
 import com.example.libraryadminapp.core.domain.student.response.StudentCourseResponseModel;
-import com.example.libraryadminapp.entrypoint.student.controller.response.CoursePaymentInfoResponseDTO;
 import org.springframework.data.domain.Page;
 
 import java.io.IOException;
@@ -18,6 +18,8 @@ public interface StudentService {
     StudentLoginResponseModel login(StudentLoginRequestModel studentLoginModel);
 
     void verifyStudentOTP(String otp, String mobileNumber) throws IOException;
+
+    void resendOTP(String mobileNumber) throws IOException;
 
     void setFCMToken(String fcmToken, String mobileNumber) throws IOException;
 
@@ -42,4 +44,13 @@ public interface StudentService {
 
     Page<CoursePaymentInfoResponseModel> filterByDeliveryAddress();
 
+    List<String> getStudentNotifications(String mobileNumber);
+
+    void unassignStudentFromCourse(String courseName,String mobileNumber);
+
+    void unassignStudentFromCoursePaper(String coursePaperName, String mobileNumber);
+
+    Page<CoursePaymentInfoResponseModel> findAllByCoursePapersExists();
+
+    Page<CoursePaymentInfoResponseModel> findAllByCourseSlotsExists();
 }

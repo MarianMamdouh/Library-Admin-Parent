@@ -8,4 +8,7 @@ import java.util.Optional;
 public interface AcademicYearJpaRepository extends JpaRepository<AcademicYear, Long> {
 
     Optional<AcademicYear> findByYear(String year);
+
+    void deleteByYear(String year);
+
 }

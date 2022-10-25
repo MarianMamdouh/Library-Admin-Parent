@@ -40,11 +40,11 @@
               Price Per Month
               <p-sortIcon field="pricePerMonth"></p-sortIcon>
             </th>
-            <th pSortableColumn="maxNumOfBookings">
+            <th pSortableColumn="academicYear">
               Academic Year
               <p-sortIcon field="academicYear"></p-sortIcon>
             </th>
-            <th pSortableColumn="maxNumOfBookings">
+            <th pSortableColumn="facultyName">
               Faculty Name
               <p-sortIcon field="facultyName"></p-sortIcon>
             </th>
@@ -86,6 +86,9 @@
               <button pButton pRipple icon="pi pi-file" class="p-button-rounded p-button-help p-mr-2"
                       pTooltip="Add New Course Paper"
                       (click)="openNewCourseCoursePaperDialogue(course)"></button>
+              <button pButton pRipple icon="pi pi-plus-circle" class="p-button-rounded p-button-warning p-mr-2"
+                      pTooltip="Assign Existing Course Paper"
+                      (click)="openAssignNewCoursePaperDialogue(course)"></button>
               <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success p-mr-2"
                       pTooltip="Edit Course"
                       (click)="openNewEditCourseDialogue(course)"></button>
@@ -105,23 +108,23 @@
                   </ng-template>
                   <ng-template pTemplate="header">
           <tr>
-            <th pSortableColumn="Name">Name
-              <p-sortIcon field="Name"></p-sortIcon>
+            <th pSortableColumn="coursePaperName">Name
+              <p-sortIcon field="coursePaperName"></p-sortIcon>
             </th>
             <th pSortableColumn="subjectName">Subject Name
               <p-sortIcon field="subjectName"></p-sortIcon>
             </th>
-            <th pSortableColumn="date">Professor Name
-              <p-sortIcon field="date"></p-sortIcon>
+            <th pSortableColumn="professorName">Professor Name
+              <p-sortIcon field="professorName"></p-sortIcon>
             </th>
-            <th pSortableColumn="amount">Price
-              <p-sortIcon field="amount"></p-sortIcon>
+            <th pSortableColumn="price">Price
+              <p-sortIcon field="price"></p-sortIcon>
             </th>
-            <th pSortableColumn="stats">Academic Year
-              <p-sortIcon field="status"></p-sortIcon>
+            <th pSortableColumn="academicYear">Academic Year
+              <p-sortIcon field="academicYear"></p-sortIcon>
             </th>
-            <th pSortableColumn="stats">Faculty Name
-              <p-sortIcon field="status"></p-sortIcon>
+            <th pSortableColumn="facultyName">Faculty Name
+              <p-sortIcon field="facultyName"></p-sortIcon>
             </th>
             <th></th>
           </tr>
@@ -153,17 +156,17 @@
             </ng-template>
             <ng-template pTemplate="header">
     <tr>
-      <th pSortableColumn="Name">Day
-        <p-sortIcon field="Name"></p-sortIcon>
+      <th pSortableColumn="day">Day
+        <p-sortIcon field="day"></p-sortIcon>
       </th>
-      <th pSortableColumn="subjectName">Start time
-        <p-sortIcon field="subjectName"></p-sortIcon>
+      <th pSortableColumn="startTime">Start time
+        <p-sortIcon field="startTime"></p-sortIcon>
       </th>
-      <th pSortableColumn="date">End Time
-        <p-sortIcon field="date"></p-sortIcon>
+      <th pSortableColumn="endTime">End Time
+        <p-sortIcon field="endTime"></p-sortIcon>
       </th>
-      <th pSortableColumn="amount">Max number of bookings
-        <p-sortIcon field="amount"></p-sortIcon>
+      <th pSortableColumn="maxNumberOfBookings">Max number of bookings
+        <p-sortIcon field="maxNumberOfBookings"></p-sortIcon>
       </th>
     </tr>
     </ng-template>
@@ -221,17 +224,12 @@
         </div>
         <div class="p-field">
           <label class="course-dialogue-label">Academic Year</label>
-          <p-dropdown [options]="academicYears" [(ngModel)]="course.academicYear" required></p-dropdown>
+          <p-dropdown [options]="academicYearNames" [(ngModel)]="course.academicYear" required></p-dropdown>
           <small class="p-error" *ngIf="submitted && !course.academicYear">Academic Year is requried.</small>
         </div>
         <div class="p-field">
           <label class="course-dialogue-label">Faculty Name</label>
-          <p-dropdown [options]="facultyNames" [(ngModel)]="course.facultyName" required></p-dropdown>
-          <small class="p-error" *ngIf="submitted && !course.facultyName">Faculty Name is requried.</small>
-        </div>
-        <div class="p-field">
-          <label class="course-dialogue-label">Course Papers</label>
-          <p-multiSelect [options]="coursePaperNames" [(ngModel)]="selectedCoursePaperNames" required></p-multiSelect>
+          <p-dropdown [options]="facultyNamesNames" [(ngModel)]="course.facultyName" required></p-dropdown>
           <small class="p-error" *ngIf="submitted && !course.facultyName">Faculty Name is requried.</small>
         </div>
       </ng-template>
@@ -241,15 +239,23 @@
                 (click)="OpenNewCourseSlotDialog()"></button>
       </ng-template>
     </p-dialog>
-    <p-dialog [(visible)]="courseSlotsDialog" [style]="{width: '750px', height: '800px'}" header="Add course slots"
+    <p-dialog [(visible)]="courseSlotsDialog" [style]="{width: '750px', height: '800px'}" header="Course Details"
               [modal]="true" styleClass="p-fluid">
       <ng-template pTemplate="content">
         <div class="p-field" *ngIf="!addToCourse">
-          <h3>Course slot 1</h3>
+          <h3>Course Papers</h3>
+        </div>
+        <div class="p-field">
+          <label class="course-dialogue-label">Course Papers</label>
+          <p-multiSelect appendTo="body" [options]="coursePaperNames" [(ngModel)]="selectedCoursePaperNames" required></p-multiSelect>
+          <small class="p-error" *ngIf="isCourseSlotDialogueSubmitted && selectedCoursePaperNames.length == 0">Course Papers are required.</small>
+        </div>
+        <div class="p-field" *ngIf="!addToCourse">
+          <h3>Course slot</h3>
         </div>
         <div class="p-field">
           <label for="courseSlotOneDay">Day</label>
-          <p-dropdown id="courseSlotOneDay" [options]="weekDays" [(ngModel)]="courseSlotOne.day"></p-dropdown>
+          <p-multiSelect id="courseSlotOneDay" [options]="weekDays" [(ngModel)]="selectedCourseSlotDays" required></p-multiSelect>
           <small class="p-error" *ngIf="isCourseSlotDialogueSubmitted && !courseSlotOne.day">Course Slot Day is
             requried.</small>
         </div>
@@ -266,6 +272,8 @@
                       [readonlyInput]="true"></p-calendar>
           <small class="p-error" *ngIf="isCourseSlotDialogueSubmitted && courseSlotOne.endTime<courseSlotOne.startTime">
             End Time must be before start time</small>
+          <small class="p-error" *ngIf="isCourseSlotDialogueSubmitted && !courseSlotOne.endTime">
+            End Time is required</small>
         </div>
         <div class="p-field">
           <label for="courseSlotOneMaxNumberOfBookings">Maximum number of bookings</label>
@@ -282,6 +290,22 @@
                 (click)="hideCourseSlotDialog()"></button>
         <button pButton pRipple label="Save" icon="pi pi-check" class="p-button-text"
                 (click)="addToCourse? addCourseSlotToCourse(): saveCourse()"></button>
+      </ng-template>
+    </p-dialog>
+    <p-dialog [(visible)]="assignCoursePaperDialog" [style]="{width: '750px', height: '800px'}" header="Assign course papers"
+              [modal]="true" styleClass="p-fluid">
+      <ng-template pTemplate="content">
+        <div class="p-field">
+          <label class="course-dialogue-label">Course Papers</label>
+          <p-multiSelect appendTo="body" [options]="coursePaperNames" [(ngModel)]="selectedCoursePaperNames" required></p-multiSelect>
+          <small class="p-error" *ngIf="isAssignCoursePaperDialogueSubmitted && !selectedCoursePaperNames">Faculty Name is requried.</small>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text"
+                (click)="hideAssignCoursePaperDialog()"></button>
+        <button pButton pRipple label="Save" icon="pi pi-check" class="p-button-text"
+                (click)="saveCourseWithAssignedCoursePapers()"></button>
       </ng-template>
     </p-dialog>
     <p-dialog [(visible)]="editCourseDialog" [style]="{width: '750px', height: '700px'}" header="Course Details"
@@ -317,13 +341,13 @@
         </div>
         <div class="p-field">
           <label class="course-dialogue-label">Academic Year</label>
-          <p-dropdown [options]="academicYears" [(ngModel)]="course.academicYear" required></p-dropdown>
+          <p-dropdown [options]="academicYearNames" [(ngModel)]="course.academicYear" required></p-dropdown>
           <small class="p-error" *ngIf="isEditCourseDialogSubmitted && !course.academicYear">Academic Year is
             requried.</small>
         </div>
         <div class="p-field">
           <label class="course-dialogue-label">Faculty Name</label>
-          <p-dropdown [options]="facultyNames" [(ngModel)]="course.facultyName" required></p-dropdown>
+          <p-dropdown [options]="facultyNamesNames" [(ngModel)]="course.facultyName" required></p-dropdown>
           <small class="p-error" *ngIf="isEditCourseDialogSubmitted && !course.facultyName">Faculty Name is
             requried.</small>
         </div>
@@ -423,17 +447,22 @@
                [rowHover]="true">
         <ng-template pTemplate="header">
           <tr>
-            <th pSortableColumn="academicYear">
+            <th pSortableColumn="year">
               Academic Year
-              <p-sortIcon field="coursePaperName"></p-sortIcon>
+              <p-sortIcon field="year"></p-sortIcon>
             </th>
             <th></th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-academicYear>
           <tr>
-            <td>{{academicYear}}</td>
+            <td>{{academicYear.year}}</td>
+            <td>
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
+                      (click)="deleteAcademicYear(academicYear)"></button>
+            </td>
           </tr>
+          <th></th>
         </ng-template>
         <ng-template pTemplate="summary">
           <div class="p-d-flex p-ai-center p-jc-between">
@@ -472,23 +501,19 @@
                   (click)="openNewFacultyNameDialogue()"></button>
         </ng-template>
       </p-toolbar>
-      <p-table [value]="facultyNames" [rows]="10" [paginator]="true"
-               [rowHover]="true">
+      <p-table #dt [value]="facultyNames" [rows]="10" [paginator]="true"
+               [rowHover]="true" sortField="facultyName" >
         <ng-template pTemplate="header">
           <tr>
-            <th pSortableColumn="facultyName">
-              Faculty Names
-              <p-sortIcon field="coursePaperName"></p-sortIcon>
+            <th pSortableColumn="name" >
+              Faculty Name
+              <p-sortIcon field="name"></p-sortIcon>
             </th>
-            <th></th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-facultyName>
           <tr>
-            <td>{{facultyName}}</td>
-            <!--            <td>-->
-            <!--              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteCoursePaper(coursePaper)"></button>-->
-            <!--            </td>-->
+            <td>{{facultyName.name}}</td>
           </tr>
         </ng-template>
         <ng-template pTemplate="summary">
@@ -515,7 +540,85 @@
       </ng-template>
     </p-dialog>
   </p-tabPanel>
-  <p-tabPanel header="Course Payment Info">
+  <p-tabPanel header="Student Courses infos">
+    <p-toast></p-toast>
+    <div class="card">
+      <p-table [value]="studentAssignedCourses" [rows]="10" [paginator]="true"
+               [rowHover]="true">
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="mobileNumber">
+              Mobile Number
+              <p-sortIcon field="mobileNumber"></p-sortIcon>
+            </th>
+            <th pSortableColumn="courseName">
+              Course Name
+              <p-sortIcon field="courseName"></p-sortIcon>
+            </th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-studentAssignedCourse>
+          <tr>
+            <td>{{studentAssignedCourse.mobileNumber}}</td>
+            <td>{{studentAssignedCourse.courseName}}</td>
+            <td>
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
+                      pTooltip="Delete Payment Info"
+                      (click)="unassignStudentFromCourse(studentAssignedCourse)"></button></td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="summary">
+          <div class="p-d-flex p-ai-center p-jc-between">
+            In total there are {{studentAssignedCourses ? studentAssignedCourses.length : 0 }} payment infos.
+          </div>
+        </ng-template>
+      </p-table>
+    </div>
+  </p-tabPanel>
+  <p-tabPanel header="Course Papers and Student Infos">
+    <p-toast></p-toast>
+    <div class="card">
+
+      <p-table [value]="studentAssignedCoursePapers" [rows]="10" [paginator]="true"
+               [rowHover]="true">
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="mobileNumber">
+              Mobile Number
+              <p-sortIcon field="mobileNumber"></p-sortIcon>
+            </th>
+            <th pSortableColumn="coursePaperName">
+              Course Paper Name
+              <p-sortIcon field="coursePaperName"></p-sortIcon>
+            </th>
+            <th pSortableColumn="status">
+              Status
+              <p-sortIcon field="status"></p-sortIcon>
+            </th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-studentAssignedCoursePaper>
+          <tr>
+            <td>{{studentAssignedCoursePaper.mobileNumber}}</td>
+            <td>{{studentAssignedCoursePaper.coursePaperName}}</td>
+            <td>Submitted</td>
+            <td>
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
+                      pTooltip="Unassign Student From Course Paper"
+                      (click)="unassignStudentFromCoursePaper(studentAssignedCoursePaper)"></button></td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="summary">
+          <div class="p-d-flex p-ai-center p-jc-between">
+            In total there are {{studentAssignedCoursePapers ? studentAssignedCoursePapers.length : 0 }} payment infos.
+          </div>
+        </ng-template>
+      </p-table>
+    </div>
+  </p-tabPanel>
+  <p-tabPanel header="Course Payment infos">
     <p-toast></p-toast>
     <div class="card">
       <p-toolbar styleClass="p-mb-4">
@@ -536,9 +639,9 @@
               Payment Number
               <p-sortIcon field="paymentNumber"></p-sortIcon>
             </th>
-            <th pSortableColumn="studentName">
-              Student Name
-              <p-sortIcon field="studentName"></p-sortIcon>
+            <th pSortableColumn="mobileNumber">
+              Mobile Number
+              <p-sortIcon field="mobileNumber"></p-sortIcon>
             </th>
             <th pSortableColumn="courseName">
               Course Name
@@ -550,11 +653,12 @@
         <ng-template pTemplate="body" let-paymentInfo>
           <tr>
             <td>{{paymentInfo.paymentNumber}}</td>
-            <td>{{paymentInfo.studentName}}</td>
+            <td>{{paymentInfo.mobileNumber}}</td>
             <td>{{paymentInfo.courseName}}</td>
             <td><button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
                         pTooltip="Delete Payment Info"
-                        (click)="deleteCoursePaymentInfo(paymentInfo)"></button></td>
+                        (click)="deleteCoursePaymentInfo(paymentInfo)"></button>
+            </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="summary">
@@ -565,7 +669,7 @@
       </p-table>
     </div>
   </p-tabPanel>
-  <p-tabPanel header="Course Papers Payment Info">
+  <p-tabPanel header="Course Papers Payment Infos">
     <p-toast></p-toast>
     <div class="card">
       <p-toolbar styleClass="p-mb-4">
@@ -578,7 +682,7 @@
                </span>
         </ng-template>
         <ng-template pTemplate="right">
-          <button pButton pRipple icon="pi pi-filter" label="Filter" class="p-button-success p-mr-2" pTooltip="Filter By Delivery Address" tooltipPosition="top"
+          <button pButton pRipple icon="pi pi-filter" label="Filter by Delivery Address" class="p-button-success p-mr-2" pTooltip="Filter By Delivery Address" tooltipPosition="top"
                   (click)="filterByDeliveryAddress()"></button>
           <button pButton pRipple icon="pi pi-times-circle" label="Reset" class="p-button-success p-mr-2" pTooltip="Reset" tooltipPosition="top"
                   (click)="getAllStudentCoursePapersPaymentInfo()"></button>
@@ -593,9 +697,9 @@
               Payment Number
               <p-sortIcon field="paymentNumber"></p-sortIcon>
             </th>
-            <th pSortableColumn="studentName">
-              Student Name
-              <p-sortIcon field="studentName"></p-sortIcon>
+            <th pSortableColumn="mobileNumber">
+              Mobile Number
+              <p-sortIcon field="mobileNumber"></p-sortIcon>
             </th>
             <th pSortableColumn="coursePaperName">
               Course Paper Name
@@ -607,6 +711,7 @@
             </th>
             <th pSortableColumn="status">
               Status
+              <p-sortIcon field="status"></p-sortIcon>
             </th>
             <th></th>
           </tr>
@@ -614,13 +719,14 @@
         <ng-template pTemplate="body" let-coursePapersPaymentInfo>
           <tr>
             <td>{{coursePapersPaymentInfo.paymentNumber}}</td>
-            <td>{{coursePapersPaymentInfo.studentName}}</td>
+            <td>{{coursePapersPaymentInfo.mobileNumber}}</td>
             <td>{{coursePapersPaymentInfo.coursePaperName}}</td>
             <td>{{coursePapersPaymentInfo.deliveryAddress}}</td>
             <td>Submitted</td>
             <td><button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
                     pTooltip="Delete Payment Info"
-                    (click)="deleteCoursePaperPaymentInfo(coursePapersPaymentInfo)"></button></td>
+                    (click)="deleteCoursePaperPaymentInfo(coursePapersPaymentInfo)"></button>
+             </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="summary">
@@ -663,13 +769,13 @@
     </div>
     <div class="p-field">
       <label class="course-dialogue-label">Academic Year</label>
-      <p-dropdown [options]="academicYears" [(ngModel)]="coursePaper.academicYear"></p-dropdown>
+      <p-dropdown [options]="academicYearNames" [(ngModel)]="coursePaper.academicYear"></p-dropdown>
       <small class="p-error" *ngIf="isCoursePaperDialogueSubmitted && !coursePaper.academicYear">Academic Year is
         requried.</small>
     </div>
     <div class="p-field">
       <label class="course-dialogue-label">Faculty Name</label>
-      <p-dropdown [options]="facultyNames" [(ngModel)]="coursePaper.facultyName"></p-dropdown>
+      <p-dropdown [options]="facultyNamesNames" [(ngModel)]="coursePaper.facultyName"></p-dropdown>
       <small class="p-error" *ngIf="isCoursePaperDialogueSubmitted && !coursePaper.facultyName">Faculty Name is
         requried.</small>
     </div>

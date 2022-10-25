@@ -33,10 +33,6 @@ public class CoursePaper {
     @Column(nullable = false)
     private BigDecimal price;
 
-    @ManyToOne
-    @JoinColumn(name = "course_id")
-    private Course course;
-
     @OneToOne
     @JoinColumn(name = "academic_year_id")
     private AcademicYear academicYear;

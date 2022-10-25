@@ -1,9 +1,7 @@
 package com.example.libraryadminapp.infrastructure.database.student.impl;
 
-import com.example.libraryadminapp.core.domain.course.entity.Course;
 import com.example.libraryadminapp.core.domain.student.entity.Student;
 import com.example.libraryadminapp.core.domain.student.repository.StudentRepository;
-import com.example.libraryadminapp.infrastructure.database.course.CourseJpaRepository;
 import com.example.libraryadminapp.infrastructure.database.student.StudentJpaRepository;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -63,6 +61,20 @@ public class StudentRepositoryImpl implements StudentRepository {
     public void deleteAll() {
 
         studentJpaRepository.deleteAll();
+    }
+
+    @Override
+    @Transactional
+    public Page<Student> findAll() {
+
+        return studentJpaRepository.findAll(Pageable.unpaged());
+    }
+
+    @Override
+    @Transactional
+    public Page<Student> findAllByCourseSlotsExists() {
+
+        return studentJpaRepository.findAllByCourseSlotsIsNotNull(Pageable.unpaged());
     }
 
 }

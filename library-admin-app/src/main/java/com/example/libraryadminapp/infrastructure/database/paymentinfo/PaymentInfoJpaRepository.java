@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -13,6 +14,10 @@ public interface PaymentInfoJpaRepository extends JpaRepository<PaymentInfo, Lon
 
 
     Optional<PaymentInfo> findByPaymentNumber(@Param("paymentNumber") Integer paymentNumber);
+
+    Optional<PaymentInfo> findByCourse_CourseNameAndStudent_MobileNumber(String courseName, String mobileNumber);
+
+    List<PaymentInfo> findAllByCoursePaper_CoursePaperNameAndStudent_MobileNumber(String coursePaperName, String mobileNumber);
 
     Page<PaymentInfo> findAllByCourseIsNotNull(Pageable pageable);
 

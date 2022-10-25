@@ -98,16 +98,25 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/students/setupFCMToken").permitAll()
                 .antMatchers("/students/delete").permitAll()
                 .antMatchers("/", "/node_modules/**", "/style.css", "/runtime.js", "/polyfills.js", "/vendor.js",
-                        "/main.js", "/favicon.ico", "/styles.css", "/primeicons.ttf", "/primeicons.woff").permitAll()
+                        "/main.js", "/favicon.ico", "/styles.css", "/primeicons.ttf", "/primeicons.woff", "/dashboard").permitAll()
                 .antMatchers("/v2/api-docs",
                         "/configuration/ui",
                         "/swagger-resources/**",
                         "/configuration/security",
                         "/swagger-ui.html",
                         "/webjars/**",
-                        "/swagger-ui/**").permitAll()
+                        "/swagger-ui/**",
+                        "/assets/**").permitAll()
                 .antMatchers("/students/login").permitAll()
-                .anyRequest().authenticated();
+                .antMatchers("/students/verifyOTP").permitAll()
+                .antMatchers("/").permitAll()
+
+                .anyRequest().authenticated()
+                .and()
+                .logout()
+                .logoutUrl("/logout")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID");
 
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
     }

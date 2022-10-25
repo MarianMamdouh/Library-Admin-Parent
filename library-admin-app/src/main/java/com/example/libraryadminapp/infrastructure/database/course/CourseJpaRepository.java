@@ -18,7 +18,7 @@ public interface CourseJpaRepository extends JpaRepository<Course, Long> {
 
     List<Course> findAllByAcademicYear_YearAndFaculty_Name(String academicYear, String facultyName);
 
-    List<Course> findAllByAcademicYear_YearAndFaculty_NameAndCourseNameOrSubjectNameOrProfessorName(String academicYear, String facultyName, String courseName, String subjectName, String professorName);
+    List<Course> findAllByAcademicYear_YearAndFaculty_NameAndCourseNameContainsIgnoreCaseOrSubjectNameContainsIgnoreCaseOrProfessorNameContainsIgnoreCase(String academicYear, String facultyName, String courseName, String subjectName, String professorName);
 
     void deleteByCourseName(@Param("courseName") String courseName);
 }

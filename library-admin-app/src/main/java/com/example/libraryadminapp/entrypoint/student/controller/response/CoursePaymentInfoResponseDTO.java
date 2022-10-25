@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 public class CoursePaymentInfoResponseDTO {
 
-    private String studentName;
+    private String mobileNumber;
     private Integer paymentNumber;
     private String courseName;
     private String coursePaperName;

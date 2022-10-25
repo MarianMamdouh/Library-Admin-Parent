@@ -46,6 +46,7 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import {InputSwitchModule} from 'primeng/inputswitch';
 
 import {PanelModule} from "primeng/panel";
+import {LoginGuard} from "./login.guard";
 // import { AmplifyAuthenticatorModule } from '@aws-amplify/ui-angular';
 
 
@@ -97,7 +98,8 @@ import {PanelModule} from "primeng/panel";
     FacultyService,
     StudentService,
     LoginService,
-    AuthGuard
+    AuthGuard,
+    LoginGuard
   ],
   bootstrap: [AppComponent]
 })
